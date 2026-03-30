@@ -41,9 +41,8 @@ input,textarea,button{font-family:'DM Sans',sans-serif;outline:none;}
         <button onclick="setAuthTab('login')" id="tabLogin" style="flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.2s;background:#6C63FF;color:#fff;">Sign In</button>
         <button onclick="setAuthTab('signup')" id="tabSignup" style="flex:1;padding:10px;border-radius:10px;border:none;cursor:pointer;font-weight:600;font-size:14px;transition:all 0.2s;background:transparent;color:#8B8FA8;">Sign Up</button>
       </div>
-      <button onclick="googleLogin()" style="width:100%;padding:13px;border-radius:14px;border:1px solid #252730;background:#1C1E26;color:#F1F2F7;font-weight:500;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:10px;margin-bottom:18px;">
-        <span style="font-size:18px;">🌐</span> Continue with Google
-      </button>
+     
+     
       <div style="display:flex;align-items:center;gap:10px;margin-bottom:18px;">
         <div style="flex:1;height:1px;background:#252730;"></div><span style="color:#555870;font-size:13px;">or</span><div style="flex:1;height:1px;background:#252730;"></div>
       </div>
@@ -247,44 +246,14 @@ input,textarea,button{font-family:'DM Sans',sans-serif;outline:none;}
 <script>
 // ============ DATA ============
 const USERS = [
-  {id:'u1',name:'Alex Rivera',username:'@alexr',av:'AR',color:'#FF6B6B',online:true,lastSeen:'now'},
-  {id:'u2',name:'Mia Chen',username:'@miachen',av:'MC',color:'#4ECDC4',online:true,lastSeen:'now'},
-  {id:'u3',name:'Jordan Lee',username:'@jlee',av:'JL',color:'#FFE66D',online:false,lastSeen:'2h ago'},
-  {id:'u4',name:'Sam Okafor',username:'@samokafor',av:'SO',color:'#A8E6CF',online:true,lastSeen:'now'},
-  {id:'u5',name:'Priya Nair',username:'@priya',av:'PN',color:'#FF8B94',online:false,lastSeen:'5m ago'},
-  {id:'u6',name:'Chris Wolf',username:'@cwolf',av:'CW',color:'#B8B5FF',online:true,lastSeen:'now'},
+  
 ];
 let CHATS = [
-  {id:'c1',userId:'u1',lastMsg:"Hey! Are you free tonight? 🎉",time:'2m',unread:3,msgs:[
-    {id:'m1',from:'u1',text:"Hey! 👋",time:'10:00 AM',st:'seen'},
-    {id:'m2',from:'me',text:"Hey Alex! What's up?",time:'10:01 AM',st:'seen'},
-    {id:'m3',from:'u1',text:'Are you free tonight? 🎉',time:'10:02 AM',st:'delivered'},
-  ]},
-  {id:'c2',userId:'u2',lastMsg:'The design looks amazing ✨',time:'15m',unread:1,msgs:[
-    {id:'m1',from:'me',text:'Hey Mia, can you review the mockups?',time:'9:30 AM',st:'seen'},
-    {id:'m2',from:'u2',text:'Sure! Give me a sec 🎨',time:'9:31 AM',st:'seen'},
-    {id:'m3',from:'u2',text:'The design looks amazing ✨',time:'9:45 AM',st:'delivered'},
-  ]},
-  {id:'c3',userId:'u3',lastMsg:"Let's sync tomorrow morning",time:'1h',unread:0,msgs:[
-    {id:'m1',from:'u3',text:'Did you finish the report?',time:'8:00 AM',st:'seen'},
-    {id:'m2',from:'me',text:'Almost done, need 30 more mins',time:'8:05 AM',st:'seen'},
-    {id:'m3',from:'u3',text:"Let's sync tomorrow morning",time:'8:10 AM',st:'seen'},
-  ]},
-  {id:'c4',userId:'u4',lastMsg:'Sounds like a plan 🤝',time:'3h',unread:0,msgs:[
-    {id:'m1',from:'me',text:'Hey Sam, wanna grab lunch?',time:'12:00 PM',st:'seen'},
-    {id:'m2',from:'u4',text:'Sounds like a plan 🤝',time:'12:05 PM',st:'seen'},
-  ]},
-  {id:'c5',userId:'u5',lastMsg:'Thanks for the help! 🙏',time:'Yesterday',unread:0,msgs:[
-    {id:'m1',from:'u5',text:'Can you help me with this bug?',time:'Yesterday',st:'seen'},
-    {id:'m2',from:'me',text:'Of course! Share the code',time:'Yesterday',st:'seen'},
-    {id:'m3',from:'u5',text:'Thanks for the help! 🙏',time:'Yesterday',st:'seen'},
+  
   ]},
 ];
 let POSTS = [
-  {id:'p1',userId:'u1',text:'Just shipped a new feature! 🚀 The team worked incredibly hard this sprint.',time:'1h ago',likes:24,comments:5,liked:false},
-  {id:'p2',userId:'u2',text:'Design thinking is about empathy. Had a great session today 🎨',time:'3h ago',likes:41,comments:8,liked:true},
-  {id:'p3',userId:'u4',text:'Coffee + code = perfect morning ☕💻',time:'5h ago',likes:18,comments:3,liked:false},
-  {id:'p4',userId:'u6',text:'Night run done. 10km PR broken! 🏃‍♂️🔥',time:'Yesterday',likes:67,comments:12,liked:false},
+  
 ];
 const EMOJIS = ['👍','❤️','😂','😮','😢','😡','🔥','✨','🎉','🙏','😀','🥰','😎','🤔','💯','🌟'];
 const REPLIES = ["Got it! 👍","That's great!","Sure thing 😊","Let me check...","Absolutely! 🙌","On it! 🔥","lol 😂","Noted! 📝"];
