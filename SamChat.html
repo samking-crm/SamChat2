@@ -1,0 +1,1293 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="theme-color" content="#0A0B0F"/>
+<title>SamChat</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg:#0A0B0F;--sur:#13141A;--surHi:#1C1E26;--brd:#252730;--acc:#6C63FF;--accL:#8B85FF;--grn:#22C55E;--red:#EF4444;--yel:#F59E0B;--txt:#F1F2F7;--txt2:#8B8FA8;--txt3:#555870;--msgIn:#1C1E26;}
+[data-theme="light"]{--bg:#F0F2F5;--sur:#FFFFFF;--surHi:#F7F8FA;--brd:#E4E6EA;--txt:#1C1E26;--txt2:#65676B;--txt3:#8A8D91;--msgIn:#E4E6EA;}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;}
+html,body{height:100%;overflow:hidden;background:var(--bg);}
+body{font-family:'DM Sans',sans-serif;display:flex;justify-content:center;}
+::-webkit-scrollbar{width:3px;}::-webkit-scrollbar-thumb{background:var(--brd);border-radius:2px;}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideIn{from{transform:translateX(100%)}to{transform:translateX(0)}}
+@keyframes slideUp{from{transform:translateY(30px);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes glow{0%,100%{box-shadow:0 0 20px rgba(108,99,255,.3)}50%{box-shadow:0 0 40px rgba(108,99,255,.6)}}
+@keyframes callRing{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.app{width:100%;max-width:480px;height:100vh;height:100dvh;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative;}
+input,textarea,button,select{font-family:'DM Sans',sans-serif;outline:none;}
+button{cursor:pointer;}
+.scr{display:none;flex-direction:column;height:100%;}
+.scr.on{display:flex;animation:fadeIn .3s ease;}
+.panel{position:absolute;inset:0;z-index:50;background:var(--bg);display:none;flex-direction:column;}
+.panel.on{display:flex;animation:slideIn .22s ease;}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.72);z-index:200;align-items:flex-end;justify-content:center;}
+.overlay.on{display:flex;animation:fadeIn .18s ease;}
+.modal{background:var(--sur);border-radius:24px 24px 0 0;width:100%;max-width:480px;padding:22px;max-height:90dvh;overflow-y:auto;animation:slideUp .26s ease;}
+.field{width:100%;padding:13px 46px 13px 16px;border-radius:14px;border:1.5px solid var(--brd);background:var(--bg);color:var(--txt);font-size:15px;transition:border-color .2s;}
+.field:focus{border-color:var(--acc);}
+.fw{position:relative;margin-bottom:11px;}
+.fi{position:absolute;right:14px;top:50%;transform:translateY(-50%);color:var(--txt3);font-size:16px;cursor:pointer;user-select:none;background:none;border:none;padding:0;}
+.pbtn{width:100%;padding:13px;border-radius:14px;border:none;background:linear-gradient(135deg,#6C63FF,#8B85FF);color:#fff;font-weight:600;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;box-shadow:0 6px 20px rgba(108,99,255,.25);transition:opacity .2s;}
+.pbtn:disabled{opacity:.6;cursor:not-allowed;}
+.navbtn{flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;background:none;border:none;cursor:pointer;padding:6px 0;position:relative;}
+.crow{display:flex;align-items:center;gap:13px;padding:13px 18px;border-bottom:1px solid var(--brd);cursor:pointer;background:var(--sur);}
+.crow:active{background:var(--surHi);}
+.err{color:var(--red);font-size:13px;padding:8px 12px;background:rgba(239,68,68,.08);border-radius:10px;margin-bottom:10px;display:none;}
+.suc{color:var(--grn);font-size:13px;padding:8px 12px;background:rgba(34,197,94,.08);border-radius:10px;margin-bottom:10px;display:none;}
+.spin{width:20px;height:20px;border:2px solid rgba(255,255,255,.3);border-top:2px solid #fff;border-radius:50%;animation:spin .8s linear infinite;}
+.tog{width:46px;height:26px;border-radius:13px;border:none;cursor:pointer;position:relative;transition:background .2s;flex-shrink:0;}
+.tog.on{background:var(--acc);}
+.tog.off{background:var(--brd);}
+.tog::after{content:'';position:absolute;top:3px;width:20px;height:20px;border-radius:50%;background:#fff;transition:left .2s;box-shadow:0 1px 4px rgba(0,0,0,.3);}
+.tog.on::after{left:23px;}
+.tog.off::after{left:3px;}
+.srow{display:flex;align-items:center;gap:13px;padding:13px 0;border-bottom:1px solid var(--brd);}
+</style>
+</head>
+<body>
+<div class="app" id="APP">
+
+<!-- LOGIN -->
+<div class="scr on" id="loginScr" style="justify-content:center;align-items:center;padding:20px;overflow-y:auto;background:var(--bg);">
+  <div style="width:100%;max-width:370px;">
+    <div style="text-align:center;margin-bottom:26px;">
+      <div style="width:68px;height:68px;border-radius:22px;background:linear-gradient(135deg,#6C63FF,#8B85FF);display:flex;align-items:center;justify-content:center;margin:0 auto 11px;font-size:28px;animation:glow 3s ease infinite;">💬</div>
+      <h1 style="font-size:26px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;letter-spacing:-1px;">SamChat</h1>
+      <p style="color:var(--txt2);margin-top:4px;font-size:13px;">Connect with everyone, everywhere</p>
+    </div>
+    <div style="background:var(--sur);border-radius:22px;padding:22px;border:1px solid var(--brd);">
+      <div style="display:flex;background:var(--bg);border-radius:11px;padding:4px;margin-bottom:18px;">
+        <button id="tabSU" onclick="setAuthTab('signup')" style="flex:1;padding:9px;border-radius:9px;border:none;font-weight:600;font-size:13px;background:var(--acc);color:#fff;">Create Account</button>
+        <button id="tabSI" onclick="setAuthTab('login')" style="flex:1;padding:9px;border-radius:9px;border:none;font-weight:600;font-size:13px;background:transparent;color:var(--txt2);">Sign In</button>
+      </div>
+      <!-- SIGNUP -->
+      <div id="suFields">
+        <div class="fw"><input id="suName" class="field" placeholder="Full Name" style="padding-right:16px;"/></div>
+        <div class="fw">
+          <input id="suUser" class="field" placeholder="Username (e.g. samking)" oninput="fmtUser(this)" style="padding-right:16px;"/>
+          <div id="uHint" style="font-size:11px;color:var(--acc);margin-top:-6px;margin-bottom:7px;padding-left:4px;"></div>
+        </div>
+        <div class="fw"><input id="suEmail" class="field" placeholder="Email Address" type="email" style="padding-right:16px;"/></div>
+        <div class="fw">
+          <input id="suPass" class="field" placeholder="Password (min 6 chars)" type="password"/>
+          <button class="fi" onclick="togPwd('suPass',this)" type="button">👁️</button>
+        </div>
+        <div class="fw">
+          <input id="suConf" class="field" placeholder="Confirm Password" type="password"/>
+          <button class="fi" onclick="togPwd('suConf',this)" type="button">👁️</button>
+        </div>
+      </div>
+      <!-- LOGIN -->
+      <div id="siFields" style="display:none;">
+        <div class="fw"><input id="siEmail" class="field" placeholder="Email Address" type="email" style="padding-right:16px;"/></div>
+        <div class="fw">
+          <input id="siPass" class="field" placeholder="Password" type="password" onkeydown="if(event.key==='Enter')doAuth()"/>
+          <button class="fi" onclick="togPwd('siPass',this)" type="button">👁️</button>
+        </div>
+        <div style="text-align:right;margin-bottom:10px;"><span onclick="showToast('Password reset will be emailed — backend needed')" style="color:var(--accL);font-size:13px;cursor:pointer;">Forgot password?</span></div>
+      </div>
+      <div id="authErr" class="err"></div>
+      <div id="authSuc" class="suc"></div>
+      <button class="pbtn" id="authBtn" onclick="doAuth()">Create Account →</button>
+      <p id="authSwitch" style="text-align:center;margin-top:12px;font-size:13px;color:var(--txt2);">Already have an account? <span onclick="setAuthTab('login')" style="color:var(--accL);cursor:pointer;font-weight:600;">Sign In</span></p>
+    </div>
+  </div>
+</div>
+
+<!-- MAIN -->
+<div class="scr" id="mainScr">
+  <div id="hdr" style="padding:12px 16px 8px;background:var(--sur);border-bottom:1px solid var(--brd);flex-shrink:0;">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+      <h1 id="hTitle" style="font-size:20px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">💬 Messages</h1>
+      <div style="display:flex;gap:6px;align-items:center;">
+        <span id="proBadge" style="display:none;background:#F59E0B;border-radius:8px;padding:2px 7px;font-size:10px;font-weight:700;color:#000;">⭐ PRO</span>
+        <button id="newChatBtn" onclick="openNewChat()" style="width:33px;height:33px;border-radius:10px;background:var(--surHi);border:1px solid var(--brd);color:var(--txt2);font-size:16px;">✏️</button>
+        <button onclick="openMod('themeMod')" style="width:33px;height:33px;border-radius:10px;background:var(--surHi);border:1px solid var(--brd);color:var(--txt2);font-size:16px;">🎨</button>
+      </div>
+    </div>
+    <div id="hSearch" style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:8px 12px;border:1px solid var(--brd);">
+      <span style="color:var(--txt3);">🔍</span>
+      <input id="chatSearch" placeholder="Search messages..." oninput="renderChatList(this.value)" style="flex:1;background:none;border:none;color:var(--txt);font-size:14px;"/>
+    </div>
+  </div>
+  <div style="flex:1;overflow:hidden;position:relative;">
+    <!-- CHATS TAB -->
+    <div id="tChats" style="height:100%;overflow-y:auto;padding-bottom:68px;">
+      <div id="emptyChats" style="display:flex;flex-direction:column;align-items:center;justify-content:center;height:65%;color:var(--txt3);text-align:center;padding:28px;">
+        <div style="font-size:54px;margin-bottom:13px;">💬</div>
+        <div style="font-size:16px;font-weight:600;color:var(--txt2);margin-bottom:6px;">No conversations yet</div>
+        <div style="font-size:13px;">Tap ✏️ to start chatting</div>
+      </div>
+      <div id="chatList"></div>
+    </div>
+    <!-- FEED TAB -->
+    <div id="tFeed" style="height:100%;overflow-y:auto;padding-bottom:68px;display:none;" onscroll="onFeedScroll(this)">
+      <div style="padding:13px;background:var(--sur);border-bottom:1px solid var(--brd);">
+        <div style="display:flex;gap:10px;">
+          <div id="feedAv" onclick="goTab('profile')" style="width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#8B85FF);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden;cursor:pointer;"></div>
+          <div style="flex:1;">
+            <textarea id="postTxt" placeholder="What's on your mind?" rows="2" style="width:100%;background:var(--bg);border:1.5px solid var(--brd);border-radius:12px;padding:9px 12px;color:var(--txt);font-size:14px;resize:none;" onfocus="this.style.borderColor='#6C63FF'" onblur="this.style.borderColor='var(--brd)'"></textarea>
+            <div style="display:flex;gap:6px;margin-top:6px;">
+              <button onclick="document.getElementById('postMediaInp').click()" style="padding:6px 10px;background:none;border:1px solid var(--brd);border-radius:9px;color:var(--txt2);font-size:12px;">📷 Photo/Video</button>
+              <input type="file" id="postMediaInp" accept="image/*,video/*" style="display:none;" onchange="pickPostMedia(event)"/>
+              <button onclick="makePost()" style="margin-left:auto;padding:6px 16px;background:linear-gradient(135deg,#6C63FF,#8B85FF);border:none;border-radius:9px;color:#fff;font-size:13px;font-weight:600;">Post</button>
+            </div>
+            <div id="postPrev" style="margin-top:6px;display:none;"></div>
+          </div>
+        </div>
+      </div>
+      <div id="feedList"></div>
+      <div id="feedLoader" style="display:none;text-align:center;padding:18px;color:var(--txt3);font-size:13px;">Loading...</div>
+    </div>
+    <!-- SEARCH TAB -->
+    <div id="tSearch" style="height:100%;display:none;flex-direction:column;">
+      <div style="padding:12px 14px;background:var(--sur);border-bottom:1px solid var(--brd);flex-shrink:0;">
+        <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:9px 13px;border:1.5px solid var(--brd);">
+          <span style="color:var(--txt3);">🔍</span>
+          <input id="srchQ" placeholder="Search people by name or @username..." oninput="doSearch()" style="flex:1;background:none;border:none;color:var(--txt);font-size:14px;"/>
+        </div>
+      </div>
+      <div id="srchRes" style="flex:1;overflow-y:auto;padding-bottom:68px;">
+        <div style="text-align:center;padding:44px 20px;color:var(--txt3);"><div style="font-size:44px;margin-bottom:10px;">🔍</div><div style="font-size:14px;color:var(--txt2);">Search for people to chat with</div></div>
+      </div>
+    </div>
+    <!-- PROFILE TAB -->
+    <div id="tProfile" style="height:100%;overflow-y:auto;padding-bottom:68px;display:none;">
+      <div style="padding:26px 20px 20px;background:linear-gradient(160deg,rgba(108,99,255,.07),transparent);text-align:center;border-bottom:1px solid var(--brd);">
+        <div style="position:relative;display:inline-block;margin-bottom:11px;">
+          <div onclick="document.getElementById('avInp').click()" id="profAvEl" style="width:86px;height:86px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#8B85FF);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:26px;margin:0 auto;border:3px solid #6C63FF;box-shadow:0 0 0 4px rgba(108,99,255,.12);cursor:pointer;overflow:hidden;position:relative;">
+            <span id="profAvTxt"></span>
+            <img id="profAvImg" src="" style="display:none;width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%;"/>
+          </div>
+          <button onclick="document.getElementById('avInp').click()" style="position:absolute;bottom:1px;right:1px;width:24px;height:24px;border-radius:50%;background:#6C63FF;display:flex;align-items:center;justify-content:center;font-size:11px;border:2px solid var(--bg);">📷</button>
+          <input type="file" id="avInp" accept="image/*" style="display:none;" onchange="changeAvatar(event)"/>
+        </div>
+        <h2 id="profName" style="font-size:20px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;margin-top:10px;"></h2>
+        <p id="profUser" style="color:var(--acc);font-size:13px;margin-top:2px;"></p>
+        <p id="profBio" style="color:var(--txt2);font-size:13px;margin-top:4px;"></p>
+        <p id="profEmail" style="color:var(--txt3);font-size:12px;margin-top:3px;"></p>
+        <button onclick="openEditProfile()" style="margin-top:10px;background:var(--surHi);border:1px solid var(--brd);border-radius:20px;padding:6px 16px;color:var(--txt);font-size:13px;font-weight:500;">✏️ Edit Profile</button>
+        <div style="display:flex;justify-content:center;gap:28px;margin-top:16px;">
+          <div style="text-align:center;"><div id="stPosts" style="font-size:18px;font-weight:700;color:var(--txt);">0</div><div style="font-size:11px;color:var(--txt3);">Posts</div></div>
+          <div style="text-align:center;"><div id="stFlwing" style="font-size:18px;font-weight:700;color:var(--txt);">0</div><div style="font-size:11px;color:var(--txt3);">Following</div></div>
+          <div style="text-align:center;"><div id="stFlwers" style="font-size:18px;font-weight:700;color:var(--txt);">0</div><div style="font-size:11px;color:var(--txt3);">Followers</div></div>
+        </div>
+      </div>
+      <div id="premBanner" onclick="openMod('premMod')" style="margin:13px;background:linear-gradient(135deg,rgba(245,158,11,.1),rgba(239,68,68,.07));border:1px solid rgba(245,158,11,.25);border-radius:14px;padding:13px 17px;cursor:pointer;display:flex;align-items:center;gap:10px;">
+        <span style="font-size:24px;">⭐</span>
+        <div><div style="font-weight:700;color:#F59E0B;font-size:14px;">Upgrade to SamChat Premium</div><div style="font-size:12px;color:var(--txt2);margin-top:1px;">AI replies, cloud backup, themes & more</div></div>
+        <span style="margin-left:auto;color:#F59E0B;font-size:16px;">→</span>
+      </div>
+      <div style="padding:0 14px;"><div style="color:var(--txt3);font-size:11px;font-weight:600;letter-spacing:1px;padding:12px 0 6px;text-transform:uppercase;">Settings</div><div id="settList"></div></div>
+      <div style="padding:13px 14px 28px;"><button onclick="doLogout()" style="width:100%;padding:12px;background:none;border:1px solid rgba(239,68,68,.25);border-radius:12px;color:#EF4444;font-weight:600;font-size:13px;">🚪 Sign Out</button></div>
+    </div>
+  </div>
+  <!-- BOTTOM NAV -->
+  <div style="position:absolute;bottom:0;left:0;right:0;background:var(--sur);border-top:1px solid var(--brd);display:flex;padding:6px 0 max(12px,env(safe-area-inset-bottom));z-index:40;">
+    <button class="navbtn" id="nChats" onclick="goTab('chats')"><div style="position:relative;"><span style="font-size:20px;">💬</span><div id="unrDot" style="display:none;position:absolute;top:-4px;right:-8px;min-width:15px;height:15px;border-radius:8px;background:#EF4444;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;"></div></div><span style="font-size:10px;color:var(--acc);font-weight:600;">Chats</span><div id="navInd" style="position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:20px;height:3px;background:linear-gradient(90deg,#6C63FF,#8B85FF);border-radius:2px;"></div></button>
+    <button class="navbtn" id="nFeed" onclick="goTab('feed')"><span style="font-size:20px;opacity:.45;">🌐</span><span style="font-size:10px;color:var(--txt3);">Feed</span></button>
+    <button class="navbtn" id="nSearch" onclick="goTab('search')"><span style="font-size:20px;opacity:.45;">🔍</span><span style="font-size:10px;color:var(--txt3);">Search</span></button>
+    <button class="navbtn" id="nProfile" onclick="goTab('profile')"><span style="font-size:20px;opacity:.45;">👤</span><span style="font-size:10px;color:var(--txt3);">Profile</span></button>
+  </div>
+</div>
+
+<!-- CHAT PANEL -->
+<div class="panel" id="chatPanel">
+  <div style="padding:10px 14px;background:var(--sur);border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+    <button onclick="closeChat()" style="background:none;border:none;color:var(--txt2);font-size:20px;padding:4px;">←</button>
+    <div id="cpAv" onclick="openOtherProfile(activeChatOtherId)" style="width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden;cursor:pointer;position:relative;"></div>
+    <div style="flex:1;cursor:pointer;min-width:0;" onclick="openOtherProfile(activeChatOtherId)">
+      <div id="cpName" style="font-weight:600;color:var(--txt);font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;"></div>
+      <div style="font-size:11px;color:var(--txt3);">Tap to view profile</div>
+    </div>
+    <button onclick="startCall('voice')" style="background:none;border:none;color:var(--txt2);font-size:19px;padding:5px;">📞</button>
+    <button onclick="startCall('video')" style="background:none;border:none;color:var(--txt2);font-size:19px;padding:5px;">📹</button>
+  </div>
+  <div id="msgArea" style="flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:5px;background:var(--bg);"></div>
+  <div id="emojiRow" style="display:none;padding:9px 13px;background:var(--sur);border-top:1px solid var(--brd);flex-wrap:wrap;gap:7px;"></div>
+  <div id="recBar" style="display:none;padding:10px 14px;background:var(--sur);border-top:1px solid var(--brd);align-items:center;gap:10px;">
+    <div style="width:10px;height:10px;border-radius:50%;background:#EF4444;animation:pulse 1s infinite;flex-shrink:0;"></div>
+    <span style="color:var(--txt);font-size:13px;">Recording...</span>
+    <span id="recTime" style="color:var(--acc);font-weight:700;font-size:14px;margin-left:auto;">0:00</span>
+    <button onclick="cancelRec()" style="background:none;border:none;color:#EF4444;font-size:20px;padding:3px;">✕</button>
+  </div>
+  <div id="inputBar" style="padding:10px 14px;background:var(--sur);border-top:1px solid var(--brd);display:flex;align-items:center;gap:8px;flex-shrink:0;">
+    <button onclick="togEmoji()" style="background:none;border:none;color:var(--txt2);font-size:20px;flex-shrink:0;">😊</button>
+    <input id="msgInp" placeholder="Message..." onkeydown="if(event.key==='Enter'&&!event.shiftKey)sendTxt()" oninput="updSendBtn()" style="flex:1;padding:9px 14px;border-radius:22px;border:1.5px solid var(--brd);background:var(--surHi);color:var(--txt);font-size:14px;" onfocus="this.style.borderColor='#6C63FF'" onblur="this.style.borderColor='var(--brd)'"/>
+    <button onclick="document.getElementById('fileInp').click()" style="background:none;border:none;color:var(--txt2);font-size:20px;flex-shrink:0;">📎</button>
+    <input type="file" id="fileInp" accept="image/*,video/*,audio/*,.pdf,.doc,.docx,.txt,.zip" style="display:none;" onchange="handleFile(event)"/>
+    <button id="sendBtn" style="width:42px;height:42px;border-radius:50%;background:var(--surHi);border:1px solid var(--brd);color:var(--txt2);font-size:18px;flex-shrink:0;display:flex;align-items:center;justify-content:center;transition:all .2s;">🎙️</button>
+  </div>
+</div>
+
+<!-- VOICE CALL PANEL -->
+<div class="panel" id="vcPanel" style="background:linear-gradient(160deg,#1a1040,#050508);align-items:center;justify-content:space-between;padding:60px 30px 50px;">
+  <div style="text-align:center;width:100%;">
+    <div id="vcAv" style="width:110px;height:110px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:34px;border:3px solid #6C63FF;overflow:hidden;animation:callRing 1.5s ease infinite;"></div>
+    <h2 id="vcName" style="color:#fff;font-size:22px;font-weight:700;margin-top:18px;font-family:'Space Grotesk',sans-serif;"></h2>
+    <p id="vcSt" style="color:rgba(255,255,255,.5);margin-top:7px;font-size:14px;"></p>
+  </div>
+  <div style="display:flex;gap:20px;align-items:center;">
+    <div style="display:flex;flex-direction:column;align-items:center;gap:7px;">
+      <button id="vcMute" onclick="togVcMute()" style="width:58px;height:58px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:21px;">🎤</button>
+      <span style="color:rgba(255,255,255,.4);font-size:11px;">Mute</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:7px;">
+      <button onclick="endCall('voice')" style="width:66px;height:66px;border-radius:50%;border:none;background:#EF4444;color:#fff;font-size:25px;box-shadow:0 8px 24px rgba(239,68,68,.4);">📵</button>
+      <span style="color:rgba(255,255,255,.4);font-size:11px;">End Call</span>
+    </div>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:7px;">
+      <button id="vcSpk" onclick="togVcSpk()" style="width:58px;height:58px;border-radius:50%;border:none;background:rgba(255,255,255,.12);color:#fff;font-size:21px;">🔊</button>
+      <span style="color:rgba(255,255,255,.4);font-size:11px;">Speaker</span>
+    </div>
+  </div>
+</div>
+
+<!-- VIDEO CALL PANEL -->
+<div class="panel" id="vvPanel" style="background:#000;position:relative;">
+  <div id="remoteArea" style="position:absolute;inset:0;background:linear-gradient(160deg,#0d0822,#030305);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;">
+    <video id="remoteVid" autoplay playsinline style="width:100%;height:100%;object-fit:cover;display:none;"></video>
+    <div id="remoteAv" style="width:110px;height:110px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:36px;font-weight:700;border:3px solid #6C63FF;"></div>
+    <div id="vvName" style="color:#fff;font-size:19px;font-weight:700;font-family:'Space Grotesk',sans-serif;"></div>
+    <div id="vvSt" style="color:rgba(255,255,255,.5);font-size:13px;"></div>
+  </div>
+  <div style="position:absolute;top:55px;right:13px;width:88px;height:125px;border-radius:11px;overflow:hidden;border:2px solid rgba(255,255,255,.2);background:#1a1a2e;z-index:10;">
+    <video id="localVid" autoplay muted playsinline style="width:100%;height:100%;object-fit:cover;display:none;"></video>
+    <div id="localFb" style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,.4);font-size:11px;text-align:center;padding:5px;">Your camera</div>
+  </div>
+  <div style="position:absolute;top:0;left:0;right:0;padding:48px 14px 12px;background:linear-gradient(to bottom,rgba(0,0,0,.6),transparent);z-index:10;">
+    <span id="vvTimer" style="color:#fff;font-size:14px;font-weight:600;background:rgba(0,0,0,.4);padding:4px 10px;border-radius:20px;"></span>
+  </div>
+  <div style="position:absolute;bottom:0;left:0;right:0;padding:22px 28px max(28px,env(safe-area-inset-bottom));background:linear-gradient(to top,rgba(0,0,0,.7),transparent);z-index:10;">
+    <div style="display:flex;justify-content:space-around;align-items:center;">
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <button id="vvMute" onclick="togVvMute()" style="width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:19px;">🎤</button>
+        <span style="color:rgba(255,255,255,.45);font-size:10px;">Mute</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <button id="vvCam" onclick="togVvCam()" style="width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:19px;">📷</button>
+        <span style="color:rgba(255,255,255,.45);font-size:10px;">Camera</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <button onclick="endCall('video')" style="width:62px;height:62px;border-radius:50%;border:none;background:#EF4444;color:#fff;font-size:23px;box-shadow:0 6px 20px rgba(239,68,68,.45);">📵</button>
+        <span style="color:rgba(255,255,255,.45);font-size:10px;">End</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <button onclick="flipCam()" style="width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:19px;">🔄</button>
+        <span style="color:rgba(255,255,255,.45);font-size:10px;">Flip</span>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:center;gap:5px;">
+        <button id="vvSpk" onclick="togVvSpk()" style="width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.15);color:#fff;font-size:19px;">🔊</button>
+        <span style="color:rgba(255,255,255,.45);font-size:10px;">Speaker</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- OTHER PROFILE PANEL -->
+<div class="panel" id="otherProfPanel" style="overflow-y:auto;">
+  <div style="padding:10px 14px;background:var(--sur);border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+    <button onclick="closePan('otherProfPanel')" style="background:none;border:none;color:var(--txt2);font-size:20px;padding:4px;">←</button>
+    <h2 style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">Profile</h2>
+  </div>
+  <div id="otherProfContent" style="padding-bottom:28px;"></div>
+</div>
+
+<!-- COMMENT PANEL -->
+<div class="panel" id="cmtPanel" style="flex-direction:column;">
+  <div style="padding:10px 14px;background:var(--sur);border-bottom:1px solid var(--brd);display:flex;align-items:center;gap:10px;flex-shrink:0;">
+    <button onclick="closePan('cmtPanel')" style="background:none;border:none;color:var(--txt2);font-size:20px;padding:4px;">←</button>
+    <h2 id="cmtTitle" style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">Comments</h2>
+  </div>
+  <div id="cmtList" style="flex:1;overflow-y:auto;padding:13px;display:flex;flex-direction:column;gap:10px;"></div>
+  <div style="padding:10px 13px;background:var(--sur);border-top:1px solid var(--brd);display:flex;gap:8px;align-items:center;flex-shrink:0;">
+    <div id="cmtAv" style="width:32px;height:32px;border-radius:50%;background:linear-gradient(135deg,#6C63FF,#8B85FF);display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:11px;flex-shrink:0;overflow:hidden;"></div>
+    <input id="cmtInp" placeholder="Write a comment..." style="flex:1;padding:8px 12px;border-radius:20px;border:1.5px solid var(--brd);background:var(--surHi);color:var(--txt);font-size:13px;" onkeydown="if(event.key==='Enter')sendComment()"/>
+    <button onclick="sendComment()" style="background:linear-gradient(135deg,#6C63FF,#8B85FF);border:none;border-radius:18px;padding:8px 14px;color:#fff;font-size:13px;font-weight:600;">Send</button>
+  </div>
+</div>
+
+<!-- MODALS -->
+<div class="overlay" id="newChatMod"><div class="modal">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><h3 style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">Start a New Chat</h3><button onclick="closeMod('newChatMod')" style="background:none;border:none;color:var(--txt2);font-size:20px;">✕</button></div>
+  <div style="display:flex;align-items:center;gap:8px;background:var(--bg);border-radius:12px;padding:9px 12px;border:1.5px solid var(--brd);margin-bottom:12px;"><span style="color:var(--txt3);">🔍</span><input id="ncQ" placeholder="Search by name or @username..." oninput="ncSearch()" style="flex:1;background:none;border:none;color:var(--txt);font-size:13px;"/></div>
+  <div id="ncRes" style="color:var(--txt3);text-align:center;padding:16px;font-size:13px;">Type to search for users</div>
+</div></div>
+
+<div class="overlay" id="editProfMod"><div class="modal">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><h3 style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">Edit Profile</h3><button onclick="closeMod('editProfMod')" style="background:none;border:none;color:var(--txt2);font-size:20px;">✕</button></div>
+  <div class="fw"><label style="color:var(--txt2);font-size:11px;margin-bottom:3px;display:block;">Full Name</label><input id="epName" class="field" style="padding-right:16px;"/></div>
+  <div class="fw"><label style="color:var(--txt2);font-size:11px;margin-bottom:3px;display:block;">Username</label><input id="epUser" class="field" style="padding-right:16px;" oninput="fmtUser(this)"/></div>
+  <div class="fw"><label style="color:var(--txt2);font-size:11px;margin-bottom:3px;display:block;">Bio</label><textarea id="epBio" class="field" rows="3" style="padding-right:16px;resize:none;height:auto;"></textarea></div>
+  <div id="epErr" class="err"></div>
+  <button class="pbtn" onclick="saveProfile()">Save Changes</button>
+</div></div>
+
+<div class="overlay" id="themeMod"><div class="modal" style="padding:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;"><h3 style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">🎨 Choose Theme</h3><button onclick="closeMod('themeMod')" style="background:none;border:none;color:var(--txt2);font-size:20px;">✕</button></div>
+  <div style="display:flex;flex-direction:column;gap:10px;">
+    <div onclick="setTheme('dark')" id="thDark" style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:13px;border:2px solid var(--acc);background:var(--surHi);cursor:pointer;"><div style="width:36px;height:36px;border-radius:9px;background:#0A0B0F;border:1px solid #252730;display:flex;align-items:center;justify-content:center;font-size:17px;">🌙</div><div><div style="font-weight:600;color:var(--txt);font-size:14px;">Dark Mode</div><div style="font-size:11px;color:var(--txt2);">Easy on the eyes</div></div><span id="chkDark" style="margin-left:auto;color:var(--acc);font-size:18px;">✓</span></div>
+    <div onclick="setTheme('light')" id="thLight" style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:13px;border:2px solid var(--brd);background:var(--surHi);cursor:pointer;"><div style="width:36px;height:36px;border-radius:9px;background:#F0F2F5;border:1px solid #E4E6EA;display:flex;align-items:center;justify-content:center;font-size:17px;">☀️</div><div><div style="font-weight:600;color:var(--txt);font-size:14px;">Light Mode</div><div style="font-size:11px;color:var(--txt2);">Clean and bright</div></div><span id="chkLight" style="margin-left:auto;color:transparent;font-size:18px;">✓</span></div>
+    <div onclick="setTheme('system')" id="thSys" style="display:flex;align-items:center;gap:12px;padding:13px;border-radius:13px;border:2px solid var(--brd);background:var(--surHi);cursor:pointer;"><div style="width:36px;height:36px;border-radius:9px;background:linear-gradient(135deg,#0A0B0F 50%,#F0F2F5 50%);display:flex;align-items:center;justify-content:center;font-size:17px;">📱</div><div><div style="font-weight:600;color:var(--txt);font-size:14px;">System Default</div><div style="font-size:11px;color:var(--txt2);">Follow device setting</div></div><span id="chkSys" style="margin-left:auto;color:transparent;font-size:18px;">✓</span></div>
+  </div>
+</div></div>
+
+<div class="overlay" id="shareMod"><div class="modal" style="padding:20px;">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><h3 style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;">↗️ Share Post</h3><button onclick="closeMod('shareMod')" style="background:none;border:none;color:var(--txt2);font-size:20px;">✕</button></div>
+  <div id="shareOpts"></div>
+</div></div>
+
+<div class="overlay" id="settingsMod"><div class="modal">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;"><h3 id="settModTitle" style="font-size:16px;font-weight:700;color:var(--txt);font-family:'Space Grotesk',sans-serif;"></h3><button onclick="closeMod('settingsMod')" style="background:none;border:none;color:var(--txt2);font-size:20px;">✕</button></div>
+  <div id="settModContent"></div>
+</div></div>
+
+<div class="overlay" id="premMod"><div class="modal">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;"><h3 style="font-size:18px;font-weight:700;color:#F59E0B;font-family:'Space Grotesk',sans-serif;">👑 SamChat Premium</h3><button onclick="closeMod('premMod')" style="background:none;border:none;color:var(--txt2);font-size:20px;">✕</button></div>
+  <p style="color:var(--txt2);font-size:13px;margin-bottom:13px;">Unlock every premium feature</p>
+  <div id="premFeats" style="margin-bottom:13px;"></div>
+  <div style="display:flex;gap:8px;margin-bottom:11px;">
+    <div onclick="selPlan('monthly')" id="pMo" style="flex:1;background:var(--surHi);border:2px solid var(--acc);border-radius:14px;padding:14px;text-align:center;cursor:pointer;"><div style="font-weight:700;color:var(--txt);">Monthly</div><div style="font-size:22px;font-weight:700;color:var(--acc);margin:5px 0;">$4.99</div><div style="font-size:11px;color:var(--txt3);">per month</div></div>
+    <div onclick="selPlan('yearly')" id="pYr" style="flex:1;background:linear-gradient(135deg,#6C63FF,#8B85FF);border:2px solid transparent;border-radius:14px;padding:14px;text-align:center;cursor:pointer;position:relative;"><div style="position:absolute;top:-10px;left:50%;transform:translateX(-50%);background:#F59E0B;border-radius:10px;padding:2px 7px;font-size:10px;font-weight:700;color:#000;white-space:nowrap;">BEST VALUE</div><div style="font-weight:700;color:#fff;">Yearly</div><div style="font-size:22px;font-weight:700;color:#fff;margin:5px 0;">$39.99</div><div style="font-size:11px;color:rgba(255,255,255,.65);">Save 33%</div></div>
+  </div>
+  <div id="planDetail" style="display:none;background:var(--bg);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--brd);"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="color:var(--txt2);font-size:12px;">Plan</span><span id="pdName" style="color:var(--txt);font-size:12px;font-weight:600;"></span></div><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="color:var(--txt2);font-size:12px;">Amount</span><span id="pdAmt" style="color:var(--txt);font-size:12px;font-weight:600;"></span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--txt2);font-size:12px;">Billing</span><span id="pdBill" style="color:var(--txt);font-size:12px;font-weight:600;"></span></div></div>
+  <button id="payBtn" onclick="showToast('Connect Stripe or Paystack in your backend to accept payments')" class="pbtn" style="display:none;">💳 Proceed to Payment</button>
+  <button onclick="closeMod('premMod')" style="width:100%;margin-top:7px;background:none;border:1px solid var(--brd);border-radius:12px;padding:10px;color:var(--txt2);font-size:13px;">Maybe Later</button>
+</div></div>
+
+<div id="toast" style="display:none;position:absolute;bottom:80px;left:50%;transform:translateX(-50%);background:var(--surHi);border:1px solid var(--brd);border-radius:12px;padding:9px 17px;color:var(--txt);font-size:13px;z-index:9999;white-space:nowrap;box-shadow:0 4px 20px rgba(0,0,0,.4);max-width:88%;text-align:center;pointer-events:none;"></div>
+</div>
+
+<script>
+// ── DB ──────────────────────────────────────────────────
+var DB={users:[],chats:[],posts:[],follows:[],comments:{}};
+var PREFS={notif:{msgs:true,calls:true,likes:true,cmnts:true,sound:true},privacy:{lastSeen:true,readReceipts:true,online:true,profilePhoto:'everyone'},storage:{autoDownload:true,quality:'original'},language:'English (US)',backup:{auto:false,lastBackup:null,freq:'daily'}};
+var DB_KEY='sc5_db', SES_KEY='sc5_uid', TH_KEY='sc5_theme', PR_KEY='sc5_prefs';
+
+// ── MEDIA STORE: reliable save/load for images & videos ──
+function mediaSave(key, data){
+  if(!data)return false;
+  try{localStorage.setItem(key,data);return true;}catch(e){
+    // quota exceeded — try to free space by removing old message media
+    try{
+      var keys=Object.keys(localStorage).filter(function(k){return k.startsWith('sc5_msg_');});
+      if(keys.length){localStorage.removeItem(keys[0]);localStorage.setItem(key,data);return true;}
+    }catch(e2){}
+    return false;
+  }
+}
+function mediaLoad(key){
+  try{return localStorage.getItem(key)||null;}catch(e){return null;}
+}
+function mediaRemove(key){
+  try{localStorage.removeItem(key);}catch(e){}
+}
+
+function saveDB(){
+  try{
+    // Strip large binary data before saving the main DB index
+    var slim={
+      users:DB.users.map(function(u){return Object.assign({},u,{av:null});}),
+      chats:DB.chats.map(function(c){
+        return Object.assign({},c,{messages:c.messages.map(function(m){
+          if(m.type==='image'||m.type==='video'||m.type==='voice'||m.type==='audio'){
+            return Object.assign({},m,{data:null});
+          }
+          return m;
+        })});
+      }),
+      posts:DB.posts.map(function(p){return Object.assign({},p,{mData:null});}),
+      follows:DB.follows,
+      comments:DB.comments
+    };
+    localStorage.setItem(DB_KEY,JSON.stringify(slim));
+  }catch(e){}
+  // Save all media separately — each in its own key
+  DB.users.forEach(function(u){if(u.av)mediaSave('sc5_av_'+u.id,u.av);});
+  DB.posts.forEach(function(p){if(p.mData)mediaSave('sc5_pm_'+p.id,p.mData);});
+  DB.chats.forEach(function(c){
+    c.messages.forEach(function(m){
+      if((m.type==='image'||m.type==='video'||m.type==='voice'||m.type==='audio')&&m.data){
+        mediaSave('sc5_msg_'+m.id,m.data);
+      }
+    });
+  });
+}
+
+function loadDB(){
+  try{
+    var raw=localStorage.getItem(DB_KEY);
+    if(raw){
+      var p=JSON.parse(raw);
+      DB={users:p.users||[],chats:p.chats||[],posts:p.posts||[],follows:p.follows||[],comments:p.comments||{}};
+    }
+    // Restore all media from their separate keys
+    DB.users.forEach(function(u){
+      var av=mediaLoad('sc5_av_'+u.id);if(av)u.av=av;
+    });
+    DB.posts.forEach(function(p){
+      var m=mediaLoad('sc5_pm_'+p.id);if(m)p.mData=m;
+    });
+    DB.chats.forEach(function(c){
+      c.messages.forEach(function(m){
+        if(m.type==='image'||m.type==='video'||m.type==='voice'||m.type==='audio'){
+          if(!m.data){var d=mediaLoad('sc5_msg_'+m.id);if(d)m.data=d;}
+        }
+      });
+    });
+    var rp=localStorage.getItem(PR_KEY);if(rp)PREFS=Object.assign(PREFS,JSON.parse(rp));
+  }catch(e){}
+}
+function savePrefs(){try{localStorage.setItem(PR_KEY,JSON.stringify(PREFS));}catch(e){}}
+function saveSession(uid){try{localStorage.setItem(SES_KEY,uid);}catch(e){}}
+function loadSession(){try{return localStorage.getItem(SES_KEY);}catch(e){return null;}}
+function clearSession(){try{localStorage.removeItem(SES_KEY);}catch(e){}}
+
+// ── SEED DATA ───────────────────────────────────────────
+var SEED_USERS=[
+  {id:'s1',name:'Amara Osei',username:'amara_osei',email:'amara@demo.sc',ph:'demo',bio:'Fashion & lifestyle creator ✨ Lagos',av:null,joined:Date.now()-86400000*30},
+  {id:'s2',name:'Jide Adeyemi',username:'jidetech',email:'jide@demo.sc',ph:'demo',bio:'Software engineer 💻 | Coffee lover ☕',av:null,joined:Date.now()-86400000*25},
+  {id:'s3',name:'Chioma Nwosu',username:'chioma_writes',email:'chioma@demo.sc',ph:'demo',bio:'Author | Storyteller | Finding beauty in words 📖',av:null,joined:Date.now()-86400000*20},
+  {id:'s4',name:'Emeka Obi',username:'emeka_fitness',email:'emeka@demo.sc',ph:'demo',bio:'Personal trainer 💪 | Your health matters',av:null,joined:Date.now()-86400000*18},
+  {id:'s5',name:'Fatima Al-Hassan',username:'fatima_travels',email:'fatima@demo.sc',ph:'demo',bio:'Travel blogger 🌍 | 40+ countries | Living for sunsets',av:null,joined:Date.now()-86400000*15},
+  {id:'s6',name:'Kofi Mensah',username:'kofi_music',email:'kofi@demo.sc',ph:'demo',bio:'Musician 🎵 | Afrobeats & Soul | Accra 🇬🇭',av:null,joined:Date.now()-86400000*12}
+];
+var SEED_POSTS=[
+  {id:'sp1',uid:'s1',text:'Just dropped my new collection 🔥 Six months of work, countless late nights, and so much love poured into every piece. Fashion is how you tell your story without saying a word. Thank you to everyone who believed in this dream! 💃🏾✨',mData:null,mType:null,time:Date.now()-3600000*2,likes:['s2','s3','s4','s5','s6'],comments:['spc1','spc2','spc3']},
+  {id:'sp2',uid:'s2',text:'Hot take: The best code you will ever write is the code you delete.\n\nSpent 3 hours today removing 400 lines of clever code and replacing it with 20 clear lines. The app runs faster, the team understands it, and I slept better.\n\nSimplicity is the ultimate sophistication. 💻',mData:null,mType:null,time:Date.now()-3600000*5,likes:['s1','s3','s6'],comments:['spc4','spc5']},
+  {id:'sp3',uid:'s3',text:'There is a certain courage it takes to write honestly. To put words on a page and say — this is what I felt, this is what hurt, this is what saved me.\n\nMy new short story collection is out now. These are the stories I was afraid to tell. I hope they find you exactly when you need them. 📖❤️',mData:null,mType:null,time:Date.now()-3600000*8,likes:['s1','s2','s4','s5'],comments:['spc6','spc7']},
+  {id:'sp4',uid:'s4',text:'TRANSFORMATION TUESDAY 💪\n\nClient spotlight: 6 months ago Daniel could barely finish a 10-minute walk. Today he ran his first 5km.\n\nThis is why I do what I do. Your body is capable of so much more than your mind believes. Start today. Not Monday. TODAY. 🔥',mData:null,mType:null,time:Date.now()-3600000*12,likes:['s1','s2','s3','s5','s6'],comments:['spc8','spc9']},
+  {id:'sp5',uid:'s5',text:'Sunrise at 4,900 meters above sea level in the Atlas Mountains, Morocco. No filter needed. Just me, the cold, and the most breathtaking view I have ever seen.\n\nTravelling teaches you that the world is impossibly beautiful and you are impossibly small — and somehow that is the most freeing feeling. 🌍☀️',mData:null,mType:null,time:Date.now()-3600000*18,likes:['s1','s2','s3','s4','s6'],comments:['spc10','spc11']},
+  {id:'sp6',uid:'s6',text:'Just finished producing my first full EP. 11 tracks, 9 months, too many sleepless nights to count.\n\nAfrobeats + Soul + a little heartbreak + a lot of hope.\n\nDropping next Friday. Music has always been how I speak the things I cannot say. 🎵🇬🇭',mData:null,mType:null,time:Date.now()-3600000*24,likes:['s1','s2','s3','s4','s5'],comments:['spc12','spc13']},
+  {id:'sp7',uid:'s2',text:'Things I wish someone told me before I started coding:\n\n1. Reading code matters more than writing it\n2. Google is not cheating — it is a skill\n3. Done is better than perfect\n4. Your first version will embarrass you. Ship it anyway.\n5. Burnout is real. Rest is productive.\n\nWhat would you add? 👇',mData:null,mType:null,time:Date.now()-86400000*1,likes:['s1','s3','s4'],comments:['spc14','spc15']},
+  {id:'sp8',uid:'s4',text:'Morning routine reminder 🌅\n\n✅ Hydrate first (500ml water)\n✅ 10 minutes of movement\n✅ Eat something real, not just coffee\n✅ 5 minutes of stillness — breathe, do not scroll\n\nYou do not need a perfect morning. You just need a consistent one. 💪',mData:null,mType:null,time:Date.now()-86400000*1.5,likes:['s1','s2','s5','s6'],comments:['spc16']},
+  {id:'sp9',uid:'s1',text:'Unpopular opinion: You can look amazing without spending a fortune.\n\nThrift shops, vintage stores, and a little creativity will take you further than any luxury brand. Style is a mindset, not a price tag.\n\nWore this entire outfit for under 5,000 naira today. 🛍️',mData:null,mType:null,time:Date.now()-86400000*2,likes:['s2','s3','s6'],comments:['spc17','spc18']},
+  {id:'sp10',uid:'s5',text:'Travel tip that changed my life: slow down.\n\nI used to try to see as many cities as possible. 5 cities in 7 days chaos. Now? I spend 2 weeks in one place. I learn the streets. I find spots only locals know. I make friends instead of photos.\n\nTravel is not a checklist. It is a way of being. 🌍✈️',mData:null,mType:null,time:Date.now()-86400000*2.5,likes:['s1','s2','s3','s4'],comments:['spc19','spc20']}
+];
+var SEED_COMMENTS=[
+  {id:'spc1',uid:'s2',postId:'sp1',text:'This collection is STUNNING 😍 The craftsmanship is incredible. So proud of you!',time:Date.now()-3600000*1.5},
+  {id:'spc2',uid:'s4',postId:'sp1',text:'The dedication shows in every piece. Congrats Amara!! 🔥',time:Date.now()-3600000*1},
+  {id:'spc3',uid:'s6',postId:'sp1',text:'Might need to drop a collab track inspired by this collection 😅🎵',time:Date.now()-3600000*.5},
+  {id:'spc4',uid:'s1',postId:'sp2',text:'Simple code ages like wine. Complex code ages like milk 😂 So true!',time:Date.now()-3600000*4},
+  {id:'spc5',uid:'s3',postId:'sp2',text:'Same principle in writing. The simpler the sentence, the more powerful it hits.',time:Date.now()-3600000*3},
+  {id:'spc6',uid:'s1',postId:'sp3',text:'Already pre-ordered!! Your writing always hits different 😭❤️',time:Date.now()-3600000*7},
+  {id:'spc7',uid:'s5',postId:'sp3',text:'The stories I was afraid to tell — I felt that deeply. Cannot wait to read this.',time:Date.now()-3600000*6},
+  {id:'spc8',uid:'s1',postId:'sp4',text:'DANIEL IS A LEGEND 👏👏 This is so inspiring!!',time:Date.now()-3600000*11},
+  {id:'spc9',uid:'s3',postId:'sp4',text:'This is the content I come here for. Real results, real stories. 💪',time:Date.now()-3600000*10},
+  {id:'spc10',uid:'s2',postId:'sp5',text:'This photo is absolutely insane. No filter?? Nature is wild.',time:Date.now()-3600000*17},
+  {id:'spc11',uid:'s1',postId:'sp5',text:'Morocco is now number 1 on my list. You have convinced me 💜',time:Date.now()-3600000*15},
+  {id:'spc12',uid:'s1',postId:'sp6',text:'9 months of work!! We are NOT ready 🔥🎵',time:Date.now()-3600000*22},
+  {id:'spc13',uid:'s3',postId:'sp6',text:'Music is the language of the soul. I already know this EP will be special.',time:Date.now()-3600000*20},
+  {id:'spc14',uid:'s1',postId:'sp7',text:'Adding: imposter syndrome never fully goes away and that is okay 😅',time:Date.now()-86400000*.9},
+  {id:'spc15',uid:'s4',postId:'sp7',text:'Point 5 is the one I needed today. Taking the afternoon off 🙏',time:Date.now()-86400000*.8},
+  {id:'spc16',uid:'s2',postId:'sp8',text:'Saving this. No phone until after I do these steps 🙌',time:Date.now()-86400000*1.3},
+  {id:'spc17',uid:'s4',postId:'sp9',text:'Name a more iconic duo than Amara and thrift fashion 💃🏾',time:Date.now()-86400000*1.9},
+  {id:'spc18',uid:'s5',postId:'sp9',text:'Same energy internationally — market fashion in every country I visit!',time:Date.now()-86400000*1.8},
+  {id:'spc19',uid:'s1',postId:'sp10',text:'Slow travel changed how I see the world too. 2 weeks in Accra and I found places guidebooks never mention 🙏',time:Date.now()-86400000*2.3},
+  {id:'spc20',uid:'s6',postId:'sp10',text:'This is the advice I will live by on my next trip. Thank you! 💜',time:Date.now()-86400000*2.2}
+];
+
+function initSeed(){
+  SEED_USERS.forEach(function(u){if(!DB.users.find(function(x){return x.id===u.id;}))DB.users.push(u);});
+  SEED_POSTS.forEach(function(p){if(!DB.posts.find(function(x){return x.id===p.id;}))DB.posts.push(Object.assign({},p,{likes:[].concat(p.likes),comments:[].concat(p.comments)}));});
+  SEED_COMMENTS.forEach(function(c){if(!DB.comments[c.id])DB.comments[c.id]=c;});
+  saveDB();
+}
+
+// ── STATE ───────────────────────────────────────────────
+var me=null, activeChat=null, activeChatOtherId=null, curTab='chats', authMode='signup';
+var recTmr=null,recSecs=0,isRec=false,mRec=null,aChunks=[];
+var callState={type:null,stream:null,timer:null,secs:0,micOn:true,camOn:true,facing:'user'};
+var activeCmtPost=null, feedPage=0, feedBusy=false;
+var pmData=null,pmType=null;
+var EMOJIS=['😀','😂','❤️','🔥','👍','😍','🎉','😮','😢','🙏','✨','💯','🤝','💪','🌟','⚡','🎵','👏','🤣','😎'];
+
+// ── THEME ───────────────────────────────────────────────
+function applyTheme(t){
+  var root=g('APP');
+  if(t==='system')root.setAttribute('data-theme',window.matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light');
+  else root.setAttribute('data-theme',t);
+  try{localStorage.setItem(TH_KEY,t);}catch(e){}
+  ['dark','light','system'].forEach(function(th){
+    var chk=g('chk'+th[0].toUpperCase()+th.slice(1));
+    var card=g('th'+th[0].toUpperCase()+th.slice(1));
+    if(chk)chk.style.color=t===th?'var(--acc)':'transparent';
+    if(card)card.style.borderColor=t===th?'var(--acc)':'var(--brd)';
+  });
+}
+function setTheme(t){applyTheme(t);closeMod('themeMod');showToast('Theme changed ✓');}
+window.matchMedia('(prefers-color-scheme:dark)').addEventListener('change',function(){if((localStorage.getItem(TH_KEY)||'dark')==='system')applyTheme('system');});
+
+// ── AUTH ────────────────────────────────────────────────
+function setAuthTab(mode){
+  authMode=mode;
+  var su=(mode==='signup');
+  g('tabSU').style.background=su?'var(--acc)':'transparent';
+  g('tabSU').style.color=su?'#fff':'var(--txt2)';
+  g('tabSI').style.background=!su?'var(--acc)':'transparent';
+  g('tabSI').style.color=!su?'#fff':'var(--txt2)';
+  g('suFields').style.display=su?'block':'none';
+  g('siFields').style.display=!su?'block':'none';
+  g('authBtn').textContent=su?'Create Account →':'Sign In →';
+  g('authSwitch').innerHTML=su?'Already have an account? <span onclick="setAuthTab(\'login\')" style="color:var(--accL);cursor:pointer;font-weight:600;">Sign In</span>':'Don\'t have an account? <span onclick="setAuthTab(\'signup\')" style="color:var(--accL);cursor:pointer;font-weight:600;">Create Account</span>';
+  setErr('authErr','');setMsg('authSuc','');
+}
+
+function togPwd(inputId, btn){
+  var inp=g(inputId);
+  inp.type=(inp.type==='password')?'text':'password';
+  btn.textContent=(inp.type==='text')?'🙈':'👁️';
+}
+
+function fmtUser(inp){
+  inp.value=inp.value.toLowerCase().replace(/[^a-z0-9_.]/g,'');
+  var h=g('uHint');if(h)h.textContent=inp.value?'@'+inp.value:'';
+}
+
+function hashStr(s){var h=0;for(var i=0;i<s.length;i++)h=((h<<5)-h)+s.charCodeAt(i)|0;return h.toString(36);}
+
+function doAuth(){
+  setErr('authErr','');setMsg('authSuc','');
+  if(authMode==='signup')doSignup();else doLogin();
+}
+
+function doSignup(){
+  var name=val('suName'),uname=val('suUser'),email=val('suEmail'),pass=val('suPass'),conf=val('suConf');
+  if(!name)return setErr('authErr','Please enter your full name');
+  if(!uname||uname.length<3)return setErr('authErr','Username must be at least 3 characters');
+  if(!email||email.indexOf('@')<0)return setErr('authErr','Please enter a valid email');
+  if(!pass||pass.length<6)return setErr('authErr','Password must be at least 6 characters');
+  if(pass!==conf)return setErr('authErr','Passwords do not match');
+  if(DB.users.find(function(u){return u.email===email;}))return setErr('authErr','Email already registered — please sign in');
+  if(DB.users.find(function(u){return u.username===uname;}))return setErr('authErr','Username taken — try another');
+  setBtnLoad(true);
+  setTimeout(function(){
+    var u={id:'u'+Date.now(),name:name,username:uname,email:email,ph:hashStr(pass),bio:'👋 New to SamChat',av:null,joined:Date.now()};
+    DB.users.push(u);saveDB();setBtnLoad(false);
+    setMsg('authSuc','Account created! Welcome 🎉');
+    setTimeout(function(){enterApp(u);},700);
+  },800);
+}
+
+function doLogin(){
+  var email=val('siEmail'),pass=val('siPass');
+  if(!email)return setErr('authErr','Please enter your email');
+  if(!pass)return setErr('authErr','Please enter your password');
+  setBtnLoad(true);
+  setTimeout(function(){
+    var u=DB.users.find(function(u){return u.email===email;});
+    if(!u){setBtnLoad(false);return setErr('authErr','No account with this email — please create one first');}
+    if(u.ph!==hashStr(pass)){setBtnLoad(false);return setErr('authErr','Wrong password — please try again');}
+    var av=localStorage.getItem('sc5_av_'+u.id);if(av)u.av=av;
+    setBtnLoad(false);enterApp(u);
+  },700);
+}
+
+function setBtnLoad(on){
+  var b=g('authBtn');b.disabled=on;
+  b.innerHTML=on?'<div class="spin"></div>':(authMode==='signup'?'Create Account →':'Sign In →');
+}
+
+function enterApp(user){
+  me=user;saveSession(user.id);
+  g('loginScr').classList.remove('on');
+  g('mainScr').classList.add('on');
+  renderProfHdr();renderChatList();feedPage=0;renderFeed();renderSettings();renderPremFeats();
+  goTab('chats');
+}
+
+function doLogout(){
+  if(!confirm('Sign out of SamChat?'))return;
+  clearSession();me=null;activeChat=null;activeChatOtherId=null;
+  g('mainScr').classList.remove('on');
+  g('loginScr').classList.add('on');
+  ['suName','suUser','suEmail','suPass','suConf','siEmail','siPass'].forEach(function(id){var e=g(id);if(e)e.value='';});
+  setErr('authErr','');setMsg('authSuc','');
+  setAuthTab('signup');
+}
+
+// ── NAV ─────────────────────────────────────────────────
+function goTab(tab){
+  curTab=tab;
+  var tabs={chats:'tChats',feed:'tFeed',search:'tSearch',profile:'tProfile'};
+  var navs={chats:'nChats',feed:'nFeed',search:'nSearch',profile:'nProfile'};
+  var icons={chats:'💬',feed:'🌐',search:'🔍',profile:'👤'};
+  var lbls={chats:'Chats',feed:'Feed',search:'Search',profile:'Profile'};
+  var titles={chats:'💬 Messages',feed:'🌐 Feed',search:'🔍 Search',profile:'👤 Profile'};
+  Object.keys(tabs).forEach(function(t){
+    var e=g(tabs[t]);if(e)e.style.display=t===tab?(t==='search'?'flex':'block'):'none';
+  });
+  var unr=getTotalUnread();
+  Object.keys(navs).forEach(function(t){
+    var btn=g(navs[t]);if(!btn)return;var act=t===tab;
+    btn.innerHTML='<div style="position:relative;"><span style="font-size:20px;opacity:'+(act?1:.45)+';">'+icons[t]+'</span>'+(t==='chats'&&unr>0?'<div style="position:absolute;top:-4px;right:-8px;min-width:15px;height:15px;border-radius:8px;background:#EF4444;color:#fff;font-size:9px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 3px;">'+unr+'</div>':'')+'</div><span style="font-size:10px;color:'+(act?'var(--acc)':'var(--txt3)')+';font-weight:'+(act?600:400)+';">'+lbls[t]+'</span>'+(act?'<div style="position:absolute;bottom:-2px;left:50%;transform:translateX(-50%);width:20px;height:3px;background:linear-gradient(90deg,#6C63FF,#8B85FF);border-radius:2px;"></div>':'');
+  });
+  g('hTitle').textContent=titles[tab];
+  g('hSearch').style.display=tab==='chats'?'flex':'none';
+  g('newChatBtn').style.display=tab==='chats'?'flex':'none';
+  if(tab==='profile')renderProfHdr();
+  if(tab==='feed'){feedPage=0;renderFeed();}
+}
+
+function getTotalUnread(){
+  if(!me)return 0;
+  return DB.chats.filter(function(c){return c.members.indexOf(me.id)>-1;}).reduce(function(s,c){return s+(c.unread||0);},0);
+}
+
+// ── AVATAR ──────────────────────────────────────────────
+var AVC=['#FF6B6B','#4ECDC4','#A78BFA','#A8E6CF','#FF8B94','#B8B5FF','#6C63FF','#F59E0B','#34D399','#FB923C'];
+function avC(u){return AVC[(u.id.charCodeAt(u.id.length-1)||0)%AVC.length];}
+function ini(n){return(n||'?').split(' ').map(function(w){return w[0]||'';}).join('').substring(0,2).toUpperCase();}
+function avHTML(u,size,dot){
+  size=size||44;dot=dot||false;if(!u)return'';var c=avC(u);
+  var inner=u.av?'<img src="'+u.av+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;border-radius:50%;"/>'
+    :'<span style="color:'+c+';font-size:'+Math.round(size*.34)+'px;font-weight:700;">'+ini(u.name)+'</span>';
+  return '<div style="position:relative;display:inline-block;flex-shrink:0;"><div style="width:'+size+'px;height:'+size+'px;border-radius:50%;background:linear-gradient(135deg,'+c+'22,'+c+'44);border:2px solid '+c+'55;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden;">'+inner+'</div>'+(dot?'<div style="position:absolute;bottom:1px;right:1px;width:'+Math.max(8,Math.round(size*.24))+'px;height:'+Math.max(8,Math.round(size*.24))+'px;border-radius:50%;background:var(--grn);border:2px solid var(--bg);"></div>':'')+'</div>';
+}
+
+// ── CHATS ───────────────────────────────────────────────
+function renderChatList(filter){
+  filter=filter||'';if(!me)return;
+  var myC=DB.chats.filter(function(c){return c.members.indexOf(me.id)>-1;});
+  var emp=g('emptyChats'),lst=g('chatList');
+  if(!myC.length){emp.style.display='flex';lst.innerHTML='';return;}
+  emp.style.display='none';
+  var filt=myC.filter(function(c){
+    if(!filter)return true;
+    var oid=c.members.find(function(id){return id!==me.id;});
+    var ou=DB.users.find(function(u){return u.id===oid;});
+    return ou&&(ou.name.toLowerCase().indexOf(filter.toLowerCase())>-1||ou.username.toLowerCase().indexOf(filter.toLowerCase())>-1);
+  });
+  filt.sort(function(a,b){return(b.lastTime||0)-(a.lastTime||0);});
+  lst.innerHTML=filt.map(function(c){
+    var oid=c.members.find(function(id){return id!==me.id;});
+    var ou=DB.users.find(function(u){return u.id===oid;});if(!ou)return'';
+    var last=c.messages.length?c.messages[c.messages.length-1]:null;
+    var lt=last?(last.type==='voice'?'🎙️ Voice note':last.type==='image'?'📷 Photo':last.type==='video'?'🎬 Video':last.type==='file'?'📄 '+last.fn:(last.text||'')):'Start a conversation';
+    var unr=c.unread||0;
+    return '<div class="crow" onclick="openChat(\''+c.id+'\')">'
+      +'<div onclick="event.stopPropagation();viewAvFull(\''+ou.id+'\')">'+avHTML(ou,50,false)+'</div>'
+      +'<div style="flex:1;min-width:0;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;"><span style="font-weight:600;color:var(--txt);font-size:14px;">'+xe(ou.name)+'</span><span style="font-size:11px;color:'+(unr>0?'var(--acc)':'var(--txt3)')+';">'+fmtT(last?last.time:0)+'</span></div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;color:var(--txt2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:210px;">'+xe(lt)+'</span>'+(unr>0?'<span style="min-width:18px;height:18px;border-radius:9px;background:linear-gradient(135deg,#6C63FF,#8B85FF);color:#fff;font-size:10px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;flex-shrink:0;">'+unr+'</span>':'')+'</div></div></div>';
+  }).join('');
+}
+
+function openChat(cid){
+  var c=DB.chats.find(function(c){return c.id===cid;});if(!c)return;
+  c.unread=0;saveDB();activeChat=c;
+  var oid=c.members.find(function(id){return id!==me.id;});activeChatOtherId=oid;
+  var ou=DB.users.find(function(u){return u.id===oid;});if(!ou)return;
+  var col=avC(ou);var avEl=g('cpAv');
+  avEl.style.cssText='width:38px;height:38px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:13px;flex-shrink:0;overflow:hidden;cursor:pointer;background:linear-gradient(135deg,'+col+'22,'+col+'44);border:2px solid '+col+'55;position:relative;';
+  avEl.innerHTML=ou.av?'<img src="'+ou.av+'" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;"/>'
+    :'<span style="color:'+col+';">'+ini(ou.name)+'</span>';
+  g('cpName').textContent=ou.name;
+  renderMsgs();
+  openPan('chatPanel');
+  g('emojiRow').style.display='none';
+  updSendBtn();
+  setTimeout(function(){g('msgInp').focus();},280);
+}
+
+function closeChat(){closePan('chatPanel');activeChat=null;activeChatOtherId=null;renderChatList();}
+
+function renderMsgs(){
+  if(!activeChat)return;
+  var area=g('msgArea');
+  if(!activeChat.messages.length){
+    area.innerHTML='<div style="flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;color:var(--txt3);text-align:center;padding:28px;min-height:200px;"><div style="font-size:46px;margin-bottom:11px;">👋</div><div style="font-size:15px;font-weight:600;color:var(--txt2);margin-bottom:5px;">Say hello!</div><div style="font-size:12px;">Be the first to send a message</div></div>';
+    return;
+  }
+  area.innerHTML=activeChat.messages.map(function(msg,i){
+    var isMe=msg.from===me.id;
+    var sender=DB.users.find(function(u){return u.id===msg.from;});
+    var showAv=!isMe&&(i===0||activeChat.messages[i-1].from!==msg.from);
+    var body='';
+    if(msg.type==='text')body='<div style="word-break:break-word;white-space:pre-wrap;">'+xe(msg.text)+'</div>';
+    else if(msg.type==='image'){var imgSrc=msg.data||mediaLoad('sc5_msg_'+msg.id)||'';if(!msg.data&&imgSrc)msg.data=imgSrc;body='<img src="'+imgSrc+'" style="max-width:210px;max-height:190px;border-radius:11px;display:block;cursor:pointer;" onclick="viewImgFull(this.src)"/>';}
+    else if(msg.type==='video'){var vidSrc=msg.data||mediaLoad('sc5_msg_'+msg.id)||'';if(!msg.data&&vidSrc)msg.data=vidSrc;body='<video src="'+vidSrc+'" controls style="max-width:210px;max-height:175px;border-radius:11px;display:block;"></video>';}
+    else if(msg.type==='voice'){var vcSrc=msg.data||mediaLoad('sc5_msg_'+msg.id)||'';if(!msg.data&&vcSrc)msg.data=vcSrc;body='<div style="display:flex;align-items:center;gap:7px;min-width:150px;"><span style="font-size:17px;flex-shrink:0;">🎙️</span><audio controls src="'+vcSrc+'" style="max-width:180px;height:30px;"></audio></div>';}
+    else if(msg.type==='file')body='<div style="display:flex;align-items:center;gap:8px;cursor:pointer;" onclick="dlFile(\''+encodeURIComponent(msg.data||'')+'\',\''+xe(msg.fn||'file')+'\')"><div style="width:34px;height:34px;border-radius:9px;background:'+(isMe?'rgba(255,255,255,.15)':'rgba(108,99,255,.1)')+';display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;">'+fIco(msg.fn)+'</div><div><div style="font-weight:600;font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+xe(msg.fn||'File')+'</div><div style="font-size:10px;opacity:.6;">'+( msg.fsz||'')+'</div></div></div>';
+    var st=isMe?'<span style="font-size:9px;color:'+(msg.st==='seen'?'var(--accL)':'rgba(180,180,220,.5)')+';">'+(msg.st==='sent'?'✓':'✓✓')+'</span>':'';
+    return '<div style="display:flex;justify-content:'+(isMe?'flex-end':'flex-start')+';align-items:flex-end;gap:6px;animation:fadeIn .18s ease;">'
+      +(!isMe?'<div style="width:24px;flex-shrink:0;cursor:pointer;" onclick="openOtherProfile(\''+msg.from+'\')">'+(showAv&&sender?avHTML(sender,24):'')+'</div>':'')
+      +'<div style="max-width:74%;"><div style="padding:'+(msg.type==='text'?'8px 12px':'6px')+';border-radius:'+(isMe?'16px 16px 4px 16px':'16px 16px 16px 4px')+';background:'+(isMe?'linear-gradient(135deg,#6C63FF,#8B85FF)':'var(--msgIn)')+';color:'+(isMe?'#fff':'var(--txt)')+';'+(isMe?'box-shadow:0 3px 10px rgba(108,99,255,.2);':'')+' overflow:hidden;">'+body+'</div>'
+      +'<div style="display:flex;align-items:center;gap:3px;margin-top:2px;justify-content:'+(isMe?'flex-end':'flex-start')+'"><span style="font-size:10px;color:var(--txt3);">'+fmtT(msg.time)+'</span>'+st+'</div></div></div>';
+  }).join('');
+  area.scrollTop=area.scrollHeight;
+}
+
+function pushMsg(msg){
+  if(!activeChat)return;
+  if(!msg.id)msg.id='m'+Date.now();
+  activeChat.messages.push(msg);
+  activeChat.lastTime=msg.time;
+  saveDB();renderMsgs();renderChatList();
+}
+
+function sendTxt(){
+  var t=val('msgInp').trim();if(!t||!activeChat)return;
+  pushMsg({id:'m'+Date.now(),type:'text',text:t,from:me.id,time:Date.now(),st:'sent'});
+  g('msgInp').value='';updSendBtn();
+}
+
+function updSendBtn(){
+  var has=val('msgInp').trim().length>0;var btn=g('sendBtn');
+  if(has){
+    btn.innerHTML='➤';btn.style.background='linear-gradient(135deg,#6C63FF,#8B85FF)';btn.style.color='#fff';btn.style.border='none';
+    btn.onmousedown=null;btn.onmouseup=null;btn.ontouchstart=null;btn.ontouchend=null;btn.onclick=sendTxt;
+  }else{
+    btn.innerHTML='🎙️';btn.style.background='var(--surHi)';btn.style.color='var(--txt2)';btn.style.border='1px solid var(--brd)';
+    btn.onclick=null;
+    btn.onmousedown=function(e){e.preventDefault();startRec(e);};
+    btn.onmouseup=function(e){e.preventDefault();stopRec(e);};
+    btn.ontouchstart=function(e){e.preventDefault();startRec(e);};
+    btn.ontouchend=function(e){e.preventDefault();stopRec(e);};
+  }
+}
+
+// ── FILE / MEDIA ─────────────────────────────────────────
+function handleFile(ev){
+  var file=ev.target.files[0];if(!file||!activeChat)return;
+  if(file.size>10*1024*1024){showToast('File too large. Max 10MB for chat media.');return;}
+  showToast('Uploading...');
+  var r=new FileReader();
+  r.onerror=function(){showToast('Could not read file. Please try again.');};
+  r.onload=function(e){
+    var data=e.target.result;
+    var isImg=file.type.startsWith('image/'),isVid=file.type.startsWith('video/'),isAud=file.type.startsWith('audio/');
+    var type=isImg?'image':isVid?'video':isAud?'audio':'file';
+    var id='m'+Date.now();
+    // Save media blob immediately and independently
+    mediaSave('sc5_msg_'+id,data);
+    // Push message with data in memory (will show immediately)
+    pushMsg({id:id,type:type,data:data,from:me.id,time:Date.now(),st:'sent',fn:file.name,fsz:fmtB(file.size)});
+    showToast('Sent ✓');
+  };
+  r.readAsDataURL(file);
+  ev.target.value='';
+}
+
+function fmtB(b){if(b<1024)return b+'B';if(b<1048576)return(b/1024).toFixed(1)+'KB';return(b/1048576).toFixed(1)+'MB';}
+function fIco(n){if(!n)return'📄';var e=n.split('.').pop().toLowerCase();if(['jpg','jpeg','png','gif','webp'].indexOf(e)>-1)return'🖼️';if(['mp4','mov','avi','mkv'].indexOf(e)>-1)return'🎬';if(['mp3','wav','ogg','m4a'].indexOf(e)>-1)return'🎵';if(e==='pdf')return'📕';if(['doc','docx'].indexOf(e)>-1)return'📘';if(['zip','rar'].indexOf(e)>-1)return'🗜️';return'📄';}
+function dlFile(enc,name){if(!enc||enc==='undefined')return;var a=document.createElement('a');a.href=decodeURIComponent(enc);a.download=name;a.click();}
+function viewImgFull(src){if(!src)return;var ov=document.createElement('div');ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.97);z-index:9999;display:flex;align-items:center;justify-content:center;cursor:zoom-out;';ov.onclick=function(){ov.remove();};ov.innerHTML='<img src="'+src+'" style="max-width:96vw;max-height:92dvh;border-radius:10px;object-fit:contain;"/>';document.body.appendChild(ov);}
+function viewAvFull(uid){var u=DB.users.find(function(u){return u.id===uid;});var av=u&&u.av;if(!av)av=localStorage.getItem('sc5_av_'+uid);if(av)viewImgFull(av);}
+
+// ── VOICE RECORDING ──────────────────────────────────────
+function startRec(e){
+  if(e)e.preventDefault();if(isRec||!activeChat)return;
+  if(!navigator.mediaDevices){showToast('Microphone not supported here');return;}
+  navigator.mediaDevices.getUserMedia({audio:true}).then(function(stream){
+    isRec=true;aChunks=[];
+    var opts=MediaRecorder.isTypeSupported('audio/webm')?{mimeType:'audio/webm'}:{};
+    mRec=new MediaRecorder(stream,opts);
+    mRec.ondataavailable=function(ev){if(ev.data.size>0)aChunks.push(ev.data);};
+    mRec.onstop=function(){
+      stream.getTracks().forEach(function(t){t.stop();});
+      if(aChunks.length>0&&!isRec){
+        var blob=new Blob(aChunks,{type:mRec.mimeType||'audio/webm'});
+        var r2=new FileReader();var id='m'+Date.now();
+        r2.onload=function(ev2){var data=ev2.target.result;try{localStorage.setItem('sc5_msg_'+id,data);}catch(ex){}pushMsg({id:id,type:'voice',data:data,from:me.id,time:Date.now(),st:'sent'});};
+        r2.readAsDataURL(blob);
+      }
+    };
+    mRec.start(100);recSecs=0;
+    g('recBar').style.display='flex';g('inputBar').style.display='none';
+    recTmr=setInterval(function(){recSecs++;var m=Math.floor(recSecs/60),s=String(recSecs%60).padStart(2,'0');g('recTime').textContent=m+':'+s;if(recSecs>=120)stopRec();},1000);
+  }).catch(function(){showToast('Microphone access denied — allow it in browser settings');});
+}
+function stopRec(e){if(e)e.preventDefault();if(!isRec)return;isRec=false;clearInterval(recTmr);if(mRec&&mRec.state!=='inactive')mRec.stop();g('recBar').style.display='none';g('inputBar').style.display='flex';}
+function cancelRec(){aChunks=[];isRec=false;clearInterval(recTmr);if(mRec&&mRec.state!=='inactive'){mRec.onstop=null;mRec.stop();}g('recBar').style.display='none';g('inputBar').style.display='flex';showToast('Recording cancelled');}
+
+// ── EMOJI ────────────────────────────────────────────────
+function togEmoji(){var row=g('emojiRow');var open=row.style.display==='flex';row.style.display=open?'none':'flex';if(!open)row.innerHTML=EMOJIS.map(function(e){return'<span onclick="insEmoji(\''+e+'\')" style="font-size:23px;cursor:pointer;padding:2px;user-select:none;">'+e+'</span>';}).join('');}
+function insEmoji(e){var inp=g('msgInp');inp.value+=e;inp.focus();updSendBtn();}
+
+// ── CALLS ────────────────────────────────────────────────
+function startCall(type){
+  if(!activeChat)return;
+  var ou=DB.users.find(function(u){return u.id===activeChatOtherId;});if(!ou)return;
+  callState.type=type;callState.micOn=true;callState.camOn=true;callState.secs=0;
+  clearInterval(callState.timer);
+  if(callState.stream){callState.stream.getTracks().forEach(function(t){t.stop();});callState.stream=null;}
+  var col=avC(ou);
+  if(type==='voice'){
+    var vcAv=g('vcAv');
+    vcAv.style.cssText='width:110px;height:110px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:34px;border:3px solid '+col+';overflow:hidden;animation:callRing 1.5s ease infinite;background:linear-gradient(135deg,'+col+'22,'+col+'44);';
+    vcAv.innerHTML=ou.av?'<img src="'+ou.av+'" style="width:100%;height:100%;object-fit:cover;"/>'
+      :'<span style="color:'+col+';">'+ini(ou.name)+'</span>';
+    g('vcName').textContent=ou.name;
+    g('vcSt').textContent='📞 Calling...';g('vcSt').style.animation='pulse 1.5s infinite';
+    openPan('vcPanel');
+    navigator.mediaDevices.getUserMedia({audio:true,video:false}).then(function(stream){
+      callState.stream=stream;
+      g('vcSt').style.animation='none';g('vcSt').textContent='0:00';startCallTmr('vcSt');
+    }).catch(function(){g('vcSt').style.animation='none';g('vcSt').textContent='Connected';startCallTmr('vcSt');});
+  } else {
+    var remAv=g('remoteAv');
+    remAv.style.background='linear-gradient(135deg,'+col+'22,'+col+'44)';
+    remAv.style.color=col;remAv.style.border='3px solid '+col;
+    remAv.innerHTML=ou.av?'<img src="'+ou.av+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>'
+      :'<span style="font-weight:700;font-size:36px;">'+ini(ou.name)+'</span>';
+    g('vvName').textContent=ou.name;
+    g('vvSt').textContent='📹 Connecting...';g('vvSt').style.animation='pulse 1.5s infinite';
+    openPan('vvPanel');
+    navigator.mediaDevices.getUserMedia({audio:true,video:{facingMode:'user'}}).then(function(stream){
+      callState.stream=stream;
+      var lv=g('localVid');lv.srcObject=stream;lv.style.display='block';g('localFb').style.display='none';
+      g('vvSt').style.animation='none';g('vvSt').textContent='';startCallTmr('vvTimer');
+    }).catch(function(){g('vvSt').style.animation='none';g('vvSt').textContent='Connected';startCallTmr('vvTimer');});
+  }
+}
+
+function startCallTmr(elId){
+  callState.secs=0;
+  callState.timer=setInterval(function(){
+    callState.secs++;
+    var m=Math.floor(callState.secs/60),s=String(callState.secs%60).padStart(2,'0');
+    var el=g(elId);if(el)el.textContent=m+':'+s;
+  },1000);
+}
+
+function endCall(type){
+  clearInterval(callState.timer);
+  if(callState.stream){callState.stream.getTracks().forEach(function(t){t.stop();});callState.stream=null;}
+  var lv=g('localVid');if(lv){lv.srcObject=null;lv.style.display='none';}
+  closePan(type==='voice'?'vcPanel':'vvPanel');
+  if(activeChat&&callState.secs>0){
+    var m=Math.floor(callState.secs/60),s=String(callState.secs%60).padStart(2,'0');
+    pushMsg({id:'m'+Date.now(),type:'text',text:'📞 '+(type==='video'?'Video':'Voice')+' call ended · '+m+':'+s,from:me.id,time:Date.now(),st:'sent'});
+  }
+  callState.type=null;callState.secs=0;
+}
+
+function togVcMute(){callState.micOn=!callState.micOn;if(callState.stream)callState.stream.getAudioTracks().forEach(function(t){t.enabled=callState.micOn;});var btn=g('vcMute');btn.textContent=callState.micOn?'🎤':'🔇';btn.style.background=callState.micOn?'rgba(255,255,255,.12)':'rgba(239,68,68,.3)';}
+function togVcSpk(){var btn=g('vcSpk');var off=btn.textContent==='🔊';btn.textContent=off?'🔈':'🔊';btn.style.background=off?'rgba(108,99,255,.3)':'rgba(255,255,255,.12)';}
+function togVvMute(){callState.micOn=!callState.micOn;if(callState.stream)callState.stream.getAudioTracks().forEach(function(t){t.enabled=callState.micOn;});var btn=g('vvMute');btn.textContent=callState.micOn?'🎤':'🔇';btn.style.background=callState.micOn?'rgba(255,255,255,.15)':'rgba(239,68,68,.3)';}
+function togVvCam(){callState.camOn=!callState.camOn;if(callState.stream)callState.stream.getVideoTracks().forEach(function(t){t.enabled=callState.camOn;});var btn=g('vvCam'),lv=g('localVid'),lf=g('localFb');btn.textContent=callState.camOn?'📷':'🚫';btn.style.background=callState.camOn?'rgba(255,255,255,.15)':'rgba(239,68,68,.3)';lv.style.display=callState.camOn?'block':'none';lf.style.display=callState.camOn?'none':'flex';}
+function togVvSpk(){var btn=g('vvSpk');var off=btn.textContent==='🔊';btn.textContent=off?'🔈':'🔊';btn.style.background=off?'rgba(108,99,255,.3)':'rgba(255,255,255,.15)';}
+function flipCam(){
+  if(!callState.stream)return;
+  callState.facing=callState.facing==='user'?'environment':'user';
+  callState.stream.getVideoTracks().forEach(function(t){t.stop();});
+  navigator.mediaDevices.getUserMedia({video:{facingMode:callState.facing},audio:callState.micOn}).then(function(ns){
+    var lv=g('localVid');lv.srcObject=ns;
+    callState.stream=ns;
+  }).catch(function(){showToast('Could not flip camera');});
+}
+
+// ── OTHER PROFILE ────────────────────────────────────────
+function openOtherProfile(uid){
+  if(!uid)return;
+  if(uid===me.id){goTab('profile');if(g('chatPanel').classList.contains('on'))closeChat();return;}
+  var u=DB.users.find(function(u){return u.id===uid;});if(!u)return;
+  var av=localStorage.getItem('sc5_av_'+u.id);if(av)u.av=av;
+  var col=avC(u);
+  var isFlw=DB.follows.some(function(f){return f.frid===me.id&&f.fgid===uid;});
+  var flwrs=DB.follows.filter(function(f){return f.fgid===uid;}).length;
+  var flwing=DB.follows.filter(function(f){return f.frid===uid;}).length;
+  var uPosts=DB.posts.filter(function(p){return p.uid===uid;}).sort(function(a,b){return b.time-a.time;});
+  g('otherProfContent').innerHTML='<div style="padding:26px 20px 18px;background:linear-gradient(160deg,rgba(108,99,255,.07),transparent);text-align:center;border-bottom:1px solid var(--brd);"><div style="cursor:pointer;display:inline-block;margin-bottom:11px;" onclick="viewAvFull(\''+uid+'\')">'+avHTML(u,82)+'</div><h2 style="font-size:19px;font-weight:700;color:var(--txt);font-family:\'Space Grotesk\',sans-serif;margin-top:9px;">'+xe(u.name)+'</h2><p style="color:var(--acc);font-size:13px;margin-top:2px;">@'+u.username+'</p><p style="color:var(--txt2);font-size:13px;margin-top:4px;">'+xe(u.bio||'👋 New to SamChat')+'</p><div style="display:flex;justify-content:center;gap:26px;margin-top:14px;"><div style="text-align:center;"><div style="font-size:17px;font-weight:700;color:var(--txt);">'+uPosts.length+'</div><div style="font-size:11px;color:var(--txt3);">Posts</div></div><div style="text-align:center;"><div style="font-size:17px;font-weight:700;color:var(--txt);">'+flwing+'</div><div style="font-size:11px;color:var(--txt3);">Following</div></div><div style="text-align:center;"><div style="font-size:17px;font-weight:700;color:var(--txt);">'+flwrs+'</div><div style="font-size:11px;color:var(--txt3);">Followers</div></div></div><div style="display:flex;gap:8px;justify-content:center;margin-top:13px;"><button onclick="startChatWith(\''+uid+'\');closePan(\'otherProfPanel\');" style="padding:7px 16px;background:linear-gradient(135deg,#6C63FF,#8B85FF);border:none;border-radius:20px;color:#fff;font-size:13px;font-weight:600;">💬 Message</button><button id="flwBtn_'+uid+'" onclick="togFollowFromProf(\''+uid+'\')" style="padding:7px 16px;background:'+(isFlw?'var(--surHi)':'transparent')+';border:'+(isFlw?'1px solid var(--brd)':'1.5px solid var(--acc)')+';border-radius:20px;color:'+(isFlw?'var(--txt2)':'var(--acc)')+';font-size:13px;font-weight:600;">'+(isFlw?'Following':'Follow')+'</button></div></div><div style="padding:13px 15px;"><div style="color:var(--txt3);font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px;">Posts</div>'+(uPosts.length?uPosts.map(function(p){return miniPost(p,u);}).join(''):'<div style="text-align:center;padding:26px;color:var(--txt3);font-size:13px;">No posts yet</div>')+'</div>';
+  openPan('otherProfPanel');
+}
+function togFollowFromProf(uid){
+  var i=DB.follows.findIndex(function(f){return f.frid===me.id&&f.fgid===uid;});
+  if(i>-1)DB.follows.splice(i,1);else DB.follows.push({frid:me.id,fgid:uid});
+  saveDB();var isFlw=DB.follows.some(function(f){return f.frid===me.id&&f.fgid===uid;});
+  var btn=g('flwBtn_'+uid);
+  if(btn){btn.textContent=isFlw?'Following':'Follow';btn.style.background=isFlw?'var(--surHi)':'transparent';btn.style.border=isFlw?'1px solid var(--brd)':'1.5px solid var(--acc)';btn.style.color=isFlw?'var(--txt2)':'var(--acc)';}
+  updStatFlwing();feedPage=0;renderFeed();
+}
+function miniPost(p,u){
+  return'<div style="padding:11px 0;border-bottom:1px solid var(--brd);"><p style="color:var(--txt);font-size:13px;line-height:1.5;white-space:pre-wrap;">'+xe(p.text)+'</p>'+(p.mData&&p.mType==='image'?'<img src="'+p.mData+'" style="width:100%;max-height:180px;object-fit:cover;border-radius:10px;margin-top:7px;cursor:pointer;" onclick="viewImgFull(this.src)"/>':'')+'<div style="font-size:11px;color:var(--txt3);margin-top:5px;">'+timeAgo(p.time)+' · ❤️ '+(p.likes||[]).length+'</div></div>';
+}
+
+// ── NEW CHAT ─────────────────────────────────────────────
+function openNewChat(){g('ncQ').value='';g('ncRes').innerHTML='<div style="color:var(--txt3);text-align:center;padding:16px;font-size:13px;">Type to search for users</div>';openMod('newChatMod');}
+function ncSearch(){
+  var q=val('ncQ').toLowerCase().trim();var res=g('ncRes');
+  if(!q){res.innerHTML='<div style="color:var(--txt3);text-align:center;padding:16px;font-size:13px;">Type to search for users</div>';return;}
+  var found=DB.users.filter(function(u){return u.id!==me.id&&(u.name.toLowerCase().indexOf(q)>-1||u.username.toLowerCase().indexOf(q)>-1);});
+  if(!found.length){res.innerHTML='<div style="color:var(--txt3);text-align:center;padding:16px;font-size:13px;">No users found</div>';return;}
+  res.innerHTML=found.map(function(u){return'<div class="crow" onclick="startChatWith(\''+u.id+'\');closeMod(\'newChatMod\');">'+avHTML(u,42)+'<div style="flex:1;"><div style="font-weight:600;color:var(--txt);font-size:13px;">'+xe(u.name)+'</div><div style="font-size:12px;color:var(--acc);">@'+u.username+'</div></div><span style="color:var(--acc);font-size:12px;font-weight:600;">Chat →</span></div>';}).join('');
+}
+function startChatWith(uid){
+  var c=DB.chats.find(function(c){return c.members.indexOf(me.id)>-1&&c.members.indexOf(uid)>-1;});
+  if(!c){c={id:'c'+Date.now(),members:[me.id,uid],messages:[],unread:0,lastTime:0};DB.chats.push(c);saveDB();}
+  openChat(c.id);
+}
+
+// ── FEED ─────────────────────────────────────────────────
+var FEED_BATCH=8;
+function getAllPosts(){return[].concat(DB.posts).sort(function(a,b){return b.time-a.time;});}
+
+function renderFeed(append){
+  if(!me)return;append=append||false;
+  var myAv=me.av||localStorage.getItem('sc5_av_'+me.id);
+  var feedAv=g('feedAv');
+  feedAv.innerHTML=myAv?'<img src="'+myAv+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>':ini(me.name);
+  var all=getAllPosts();
+  var lst=g('feedList');
+  if(!append)feedPage=0;
+  var start=feedPage*FEED_BATCH;
+  var batch=all.slice(start,start+FEED_BATCH);
+  if(!batch.length&&feedPage===0){lst.innerHTML='<div style="text-align:center;padding:44px 20px;color:var(--txt3);"><div style="font-size:48px;margin-bottom:12px;">🌐</div><div style="font-size:15px;font-weight:600;color:var(--txt2);margin-bottom:6px;">No posts yet</div><div style="font-size:12px;">Be the first to post!</div></div>';return;}
+  var html=batch.map(function(p){return renderPostHTML(p);}).join('');
+  if(append)lst.innerHTML+=html;else lst.innerHTML=html;
+  feedPage++;
+  g('feedLoader').style.display=all.length>feedPage*FEED_BATCH?'block':'none';
+}
+
+function onFeedScroll(el){
+  if(feedBusy)return;
+  if(el.scrollHeight-el.scrollTop-el.clientHeight<150){
+    feedBusy=true;
+    setTimeout(function(){renderFeed(true);feedBusy=false;},400);
+  }
+}
+
+function getCmtCount(postId){
+  var arr=DB.comments['c_'+postId]||[];
+  var seed=Object.values(DB.comments).filter(function(c){return c&&typeof c==='object'&&!Array.isArray(c)&&c.postId===postId;}).length;
+  return arr.length+seed;
+}
+
+function renderPostHTML(p){
+  var poster=DB.users.find(function(u){return u.id===p.uid;});if(!poster)return'';
+  var av=poster.av||mediaLoad('sc5_av_'+poster.id);if(av)poster.av=av;
+  // Always restore media from storage in case it was stripped during saveDB
+  if(!p.mData&&p.mType){var restored=mediaLoad('sc5_pm_'+p.id);if(restored)p.mData=restored;}
+  var liked=(p.likes||[]).indexOf(me.id)>-1;
+  var cmts=getCmtCount(p.id);
+  var isMe2=p.uid===me.id;
+  return'<div id="post_'+p.id+'" style="border-bottom:1px solid var(--brd);padding:13px;background:var(--sur);">'
+    +'<div style="display:flex;gap:10px;margin-bottom:10px;align-items:center;">'
+    +'<div onclick="openOtherProfile(\''+poster.id+'\')" style="cursor:pointer;">'+avHTML(poster,40)+'</div>'
+    +'<div style="flex:1;cursor:pointer;min-width:0;" onclick="openOtherProfile(\''+poster.id+'\')">'
+    +'<div style="font-weight:600;color:var(--txt);font-size:13px;">'+xe(poster.name)+' <span style="color:var(--acc);font-size:11px;">@'+poster.username+'</span></div>'
+    +'<div style="font-size:11px;color:var(--txt3);">'+timeAgo(p.time)+'</div></div>'
+    +(isMe2?'<button onclick="deletePost(\''+p.id+'\')" style="background:none;border:none;color:var(--txt3);font-size:11px;padding:4px 7px;border-radius:7px;">🗑️</button>':'')
+    +'</div>'
+    +(p.text?'<p style="color:var(--txt);font-size:14px;line-height:1.55;margin-bottom:'+(p.mData?8:11)+'px;white-space:pre-wrap;">'+xe(p.text)+'</p>':'')
+    +(p.mData&&p.mType==='image'?'<img src="'+p.mData+'" style="width:100%;max-height:280px;object-fit:cover;border-radius:12px;margin-bottom:10px;cursor:pointer;" onclick="viewImgFull(this.src)"/>':'')
+    +(p.mData&&p.mType==='video'?'<video src="'+p.mData+'" controls style="width:100%;max-height:240px;border-radius:12px;margin-bottom:10px;"></video>':'')
+    +'<div style="display:flex;gap:3px;">'
+    +'<button onclick="togLike(\''+p.id+'\')" style="flex:1;background:'+(liked?'rgba(239,68,68,.07)':'none')+';border:1px solid '+(liked?'rgba(239,68,68,.18)':'var(--brd)')+';border-radius:8px;color:'+(liked?'#EF4444':'var(--txt2)')+';font-size:12px;padding:6px;display:flex;align-items:center;justify-content:center;gap:4px;">'+(liked?'❤️':'🤍')+' '+(p.likes||[]).length+'</button>'
+    +'<button onclick="openComments(\''+p.id+'\')" style="flex:1;background:none;border:1px solid var(--brd);border-radius:8px;color:var(--txt2);font-size:12px;padding:6px;display:flex;align-items:center;justify-content:center;gap:4px;">💬 '+cmts+'</button>'
+    +'<button onclick="sharePost(\''+p.id+'\')" style="flex:1;background:none;border:1px solid var(--brd);border-radius:8px;color:var(--txt2);font-size:12px;padding:6px;display:flex;align-items:center;justify-content:center;gap:4px;">↗️ Share</button>'
+    +'</div></div>';
+}
+
+function togLike(pid){
+  var p=DB.posts.find(function(p){return p.id===pid;});if(!p)return;
+  if(!p.likes)p.likes=[];
+  var i=p.likes.indexOf(me.id);if(i>-1)p.likes.splice(i,1);else p.likes.push(me.id);
+  saveDB();
+  var postEl=g('post_'+pid);if(postEl){var liked=p.likes.indexOf(me.id)>-1;var btn=postEl.querySelector('button');if(btn){btn.style.background=liked?'rgba(239,68,68,.07)':'none';btn.style.borderColor=liked?'rgba(239,68,68,.18)':'var(--brd)';btn.style.color=liked?'#EF4444':'var(--txt2)';btn.innerHTML=(liked?'❤️':'🤍')+' '+p.likes.length;}}
+}
+
+function deletePost(pid){
+  if(!confirm('Delete this post?'))return;
+  DB.posts=DB.posts.filter(function(p){return p.id!==pid;});
+  try{localStorage.removeItem('sc5_pm_'+pid);}catch(e){}
+  saveDB();updStatPosts();feedPage=0;renderFeed();showToast('Post deleted');
+}
+
+// ── COMMENTS ─────────────────────────────────────────────
+function openComments(pid){
+  activeCmtPost=pid;
+  var myAv=me.av||localStorage.getItem('sc5_av_'+me.id);
+  g('cmtAv').innerHTML=myAv?'<img src="'+myAv+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>':ini(me.name);
+  g('cmtTitle').textContent='Comments · '+getCmtCount(pid);
+  renderComments();g('cmtInp').value='';openPan('cmtPanel');
+  setTimeout(function(){g('cmtInp').focus();},300);
+}
+function renderComments(){
+  var lst=g('cmtList');
+  var arr=DB.comments['c_'+activeCmtPost]||[];
+  var seed=Object.values(DB.comments).filter(function(c){return c&&typeof c==='object'&&!Array.isArray(c)&&c.postId===activeCmtPost;});
+  var all=seed.concat(arr).sort(function(a,b){return(a.time||0)-(b.time||0);});
+  if(!all.length){lst.innerHTML='<div style="text-align:center;padding:28px;color:var(--txt3);font-size:13px;">No comments yet. Be the first!</div>';return;}
+  lst.innerHTML=all.map(function(c){
+    var u=DB.users.find(function(u){return u.id===c.uid;});if(!u)return'';
+    var av=u.av||localStorage.getItem('sc5_av_'+u.id);if(av)u.av=av;
+    return'<div style="display:flex;gap:8px;"><div onclick="openOtherProfile(\''+u.id+'\')" style="cursor:pointer;">'+avHTML(u,30)+'</div><div style="flex:1;background:var(--surHi);border-radius:12px;padding:8px 11px;"><div style="font-weight:600;color:var(--txt);font-size:12px;">'+xe(u.name)+' <span style="color:var(--acc);font-weight:400;">@'+u.username+'</span></div><div style="color:var(--txt);font-size:13px;margin-top:2px;white-space:pre-wrap;">'+xe(c.text)+'</div><div style="font-size:10px;color:var(--txt3);margin-top:3px;">'+timeAgo(c.time)+'</div></div></div>';
+  }).join('');
+  setTimeout(function(){lst.scrollTop=lst.scrollHeight;},50);
+}
+function sendComment(){
+  var t=val('cmtInp').trim();if(!t||!activeCmtPost)return;
+  var key='c_'+activeCmtPost;if(!DB.comments[key])DB.comments[key]=[];
+  DB.comments[key].push({id:'cm'+Date.now(),uid:me.id,postId:activeCmtPost,text:t,time:Date.now()});
+  saveDB();g('cmtInp').value='';renderComments();
+  g('cmtTitle').textContent='Comments · '+getCmtCount(activeCmtPost);
+  var postEl=g('post_'+activeCmtPost);if(postEl){var btns=postEl.querySelectorAll('button');if(btns[1])btns[1].innerHTML='💬 '+getCmtCount(activeCmtPost);}
+}
+
+// ── SHARE ────────────────────────────────────────────────
+function sharePost(pid){
+  var p=DB.posts.find(function(p){return p.id===pid;});if(!p)return;
+  var poster=DB.users.find(function(u){return u.id===p.uid;});
+  var myChats=DB.chats.filter(function(c){return c.members.indexOf(me.id)>-1;});
+  var html=myChats.length?myChats.map(function(c){
+    var oid=c.members.find(function(id){return id!==me.id;});
+    var ou=DB.users.find(function(u){return u.id===oid;});if(!ou)return'';
+    return'<div class="crow" style="border-radius:11px;margin-bottom:6px;" onclick="shareToChat(\''+c.id+'\',\''+pid+'\');closeMod(\'shareMod\');showToast(\'Shared with '+ou.name+'! ✓\');">'+avHTML(ou,38)+'<div style="flex:1;"><div style="font-weight:600;color:var(--txt);font-size:13px;">'+xe(ou.name)+'</div><div style="font-size:11px;color:var(--txt2);">@'+ou.username+'</div></div></div>';
+  }).join(''):'<div style="color:var(--txt3);font-size:13px;margin-bottom:10px;">No chats yet</div>';
+  g('shareOpts').innerHTML='<div style="color:var(--txt2);font-size:12px;margin-bottom:8px;">Share to chat:</div>'+html+'<div style="height:1px;background:var(--brd);margin:10px 0;"></div><button onclick="try{navigator.clipboard.writeText(\'samchat://post/'+pid+'\');}catch(e){}closeMod(\'shareMod\');showToast(\'Link copied 🔗\');" style="width:100%;padding:10px;background:var(--surHi);border:1px solid var(--brd);border-radius:11px;color:var(--txt);font-size:13px;">🔗 Copy Post Link</button>';
+  openMod('shareMod');
+}
+function shareToChat(cid,pid){
+  var c=DB.chats.find(function(c){return c.id===cid;});var p=DB.posts.find(function(p){return p.id===pid;});if(!c||!p)return;
+  var poster=DB.users.find(function(u){return u.id===p.uid;});
+  var txt='📤 Shared a post from @'+(poster?poster.username:'someone')+':\n\n"'+(p.text?p.text.substring(0,120)+(p.text.length>120?'...':''):'[Media post]')+'"';
+  c.messages.push({id:'m'+Date.now(),type:'text',text:txt,from:me.id,time:Date.now(),st:'sent'});c.lastTime=Date.now();saveDB();renderChatList();
+}
+
+// ── POST CREATION ────────────────────────────────────────
+function pickPostMedia(ev){
+  var file=ev.target.files[0];if(!file)return;
+  if(file.size>5*1024*1024){showToast('File too large. Please use media under 5MB.');return;}
+  showToast('Loading media...');
+  var r=new FileReader();
+  r.onerror=function(){showToast('Could not read file. Try a smaller image or video.');};
+  r.onload=function(e){
+    pmData=e.target.result;
+    pmType=file.type.startsWith('image/')?'image':'video';
+    var prev=g('postPrev');prev.style.display='block';
+    prev.innerHTML=pmType==='image'
+      ?'<div style="position:relative;"><img src="'+pmData+'" style="width:100%;max-height:180px;object-fit:cover;border-radius:11px;"/><button onclick="clrPM()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:12px;">✕</button></div>'
+      :'<div style="position:relative;"><video src="'+pmData+'" controls style="width:100%;max-height:180px;border-radius:11px;"></video><button onclick="clrPM()" style="position:absolute;top:6px;right:6px;background:rgba(0,0,0,.6);border:none;border-radius:50%;width:24px;height:24px;color:#fff;font-size:12px;">✕</button></div>';
+    showToast('Media ready ✓');
+  };
+  r.readAsDataURL(file);
+  ev.target.value='';
+}
+function clrPM(){pmData=null;pmType=null;g('postPrev').style.display='none';g('postPrev').innerHTML='';}
+function makePost(){
+  var txt=val('postTxt').trim();if(!txt&&!pmData){showToast('Write something or attach media');return;}
+  var pid='p'+Date.now();
+  // Save media to its own key FIRST before anything else
+  var savedMedia=null;
+  var savedType=pmType;
+  if(pmData){
+    var ok=mediaSave('sc5_pm_'+pid,pmData);
+    if(ok){
+      savedMedia=pmData; // keep in memory for immediate display
+    } else {
+      showToast('Could not save media — storage full. Try clearing cache in Settings.');
+      return; // don't post without media if user intended to post media
+    }
+  }
+  var post={id:pid,uid:me.id,text:txt,mData:savedMedia,mType:savedType,time:Date.now(),likes:[],comments:[]};
+  DB.posts.unshift(post);
+  // Save DB index (without media blob — it's already saved separately)
+  saveDB();
+  g('postTxt').value='';clrPM();updStatPosts();feedPage=0;renderFeed();showToast('Posted! ✨');
+}
+
+// ── SEARCH ───────────────────────────────────────────────
+function doSearch(){
+  var q=val('srchQ').toLowerCase().trim();var res=g('srchRes');
+  if(!q){res.innerHTML='<div style="text-align:center;padding:44px 20px;color:var(--txt3);"><div style="font-size:44px;margin-bottom:10px;">🔍</div><div style="font-size:14px;color:var(--txt2);">Search for people by name or @username</div></div>';return;}
+  var found=DB.users.filter(function(u){return u.id!==me.id&&(u.name.toLowerCase().indexOf(q)>-1||u.username.toLowerCase().indexOf(q)>-1);});
+  if(!found.length){res.innerHTML='<div style="text-align:center;padding:44px 20px;color:var(--txt3);"><div style="font-size:36px;margin-bottom:10px;">😕</div><div style="font-size:14px;color:var(--txt2);">No users found for "'+q+'"</div></div>';return;}
+  res.innerHTML=found.map(function(u){
+    var av=u.av||localStorage.getItem('sc5_av_'+u.id);if(av)u.av=av;
+    var isFlw=DB.follows.some(function(f){return f.frid===me.id&&f.fgid===u.id;});
+    var flwrs=DB.follows.filter(function(f){return f.fgid===u.id;}).length;
+    var posts=DB.posts.filter(function(p){return p.uid===u.id;}).length;
+    return'<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--brd);background:var(--sur);">'
+      +'<div onclick="openOtherProfile(\''+u.id+'\')" style="cursor:pointer;">'+avHTML(u,46)+'</div>'
+      +'<div style="flex:1;cursor:pointer;min-width:0;" onclick="openOtherProfile(\''+u.id+'\')">'
+      +'<div style="font-weight:600;color:var(--txt);font-size:13px;">'+xe(u.name)+'</div>'
+      +'<div style="font-size:12px;color:var(--acc);">@'+u.username+'</div>'
+      +'<div style="font-size:11px;color:var(--txt3);margin-top:1px;">'+flwrs+' follower'+(flwrs!==1?'s':'')+' · '+posts+' post'+(posts!==1?'s':'')+'</div></div>'
+      +'<div style="display:flex;flex-direction:column;gap:5px;align-items:flex-end;">'
+      +'<button onclick="togFollow(\''+u.id+'\')" style="padding:5px 12px;background:'+(isFlw?'var(--surHi)':'linear-gradient(135deg,#6C63FF,#8B85FF)')+';border:'+(isFlw?'1px solid var(--brd)':'none')+';border-radius:16px;color:'+(isFlw?'var(--txt2)':'#fff')+';font-size:11px;font-weight:600;">'+(isFlw?'Following':'Follow')+'</button>'
+      +'<button onclick="startChatWith(\''+u.id+'\');goTab(\'chats\');" style="padding:5px 12px;background:var(--surHi);border:1px solid var(--brd);border-radius:16px;color:var(--txt2);font-size:11px;">💬 Chat</button>'
+      +'</div></div>';
+  }).join('');
+}
+function togFollow(uid){
+  var i=DB.follows.findIndex(function(f){return f.frid===me.id&&f.fgid===uid;});
+  if(i>-1)DB.follows.splice(i,1);else DB.follows.push({frid:me.id,fgid:uid});
+  saveDB();doSearch();updStatFlwing();feedPage=0;renderFeed();
+}
+
+// ── PROFILE ──────────────────────────────────────────────
+function renderProfHdr(){
+  if(!me)return;
+  // Always re-pull avatar from storage in case it was cleared from memory
+  var stored=mediaLoad('sc5_av_'+me.id);
+  if(stored&&!me.av)me.av=stored;
+  var myAv=me.av||stored;
+  g('profAvTxt').textContent=ini(me.name);
+  var img=g('profAvImg');
+  if(myAv){img.src=myAv;img.style.display='block';g('profAvTxt').style.display='none';}
+  else{img.style.display='none';g('profAvTxt').style.display='';}
+  g('profName').textContent=me.name;
+  g('profUser').textContent='@'+me.username;
+  g('profBio').textContent=me.bio||'👋 New to SamChat';
+  g('profEmail').textContent=me.email;
+  updStatPosts();updStatFlwing();updStatFlwers();
+}
+function updStatPosts(){if(!me)return;g('stPosts').textContent=DB.posts.filter(function(p){return p.uid===me.id;}).length;}
+function updStatFlwing(){if(!me)return;g('stFlwing').textContent=DB.follows.filter(function(f){return f.frid===me.id;}).length;}
+function updStatFlwers(){if(!me)return;g('stFlwers').textContent=DB.follows.filter(function(f){return f.fgid===me.id;}).length;}
+
+function changeAvatar(ev){
+  var file=ev.target.files[0];if(!file)return;
+  if(file.size>2.5*1024*1024){showToast('Photo too large. Please use an image under 2.5MB.');return;}
+  showToast('Saving photo...');
+  var r=new FileReader();
+  r.onerror=function(){showToast('Could not read image. Try a smaller file.');};
+  r.onload=function(e){
+    var data=e.target.result;
+    me.av=data;
+    var u=DB.users.find(function(u){return u.id===me.id;});
+    if(u)u.av=data;
+    var saved=mediaSave('sc5_av_'+me.id,data);
+    saveDB();
+    renderProfHdr();
+    var feedAv=g('feedAv');
+    if(feedAv)feedAv.innerHTML='<img src="'+data+'" style="width:100%;height:100%;object-fit:cover;border-radius:50%;"/>';
+    showToast(saved?'Profile photo updated! 📷':'Photo visible now (storage nearly full — clear cache in Settings)');
+  };
+  r.readAsDataURL(file);
+  ev.target.value='';
+}
+function openEditProfile(){g('epName').value=me.name;g('epUser').value=me.username;g('epBio').value=me.bio||'';g('epErr').style.display='none';openMod('editProfMod');}
+function saveProfile(){
+  var name=val('epName').trim(),uname=val('epUser').trim(),bio=val('epBio').trim();
+  var err=g('epErr');err.style.display='none';
+  if(!name){err.textContent='Name cannot be empty';err.style.display='block';return;}
+  if(!uname||uname.length<3){err.textContent='Username must be at least 3 chars';err.style.display='block';return;}
+  if(DB.users.find(function(u){return u.username===uname&&u.id!==me.id;})){err.textContent='Username already taken';err.style.display='block';return;}
+  me.name=name;me.username=uname;me.bio=bio;
+  var u=DB.users.find(function(u){return u.id===me.id;});if(u){u.name=name;u.username=uname;u.bio=bio;}
+  saveDB();closeMod('editProfMod');renderProfHdr();showToast('Profile updated ✅');
+}
+
+// ── SETTINGS ─────────────────────────────────────────────
+function renderSettings(){
+  g('settList').innerHTML=[
+    {ic:'🔔',lb:'Notifications',sb:'Manage alerts & sounds',fn:"openSettingsPanel('notif')"},
+    {ic:'🔒',lb:'Privacy & Security',sb:'Control your visibility',fn:"openSettingsPanel('privacy')"},
+    {ic:'💾',lb:'Storage & Data',sb:'Manage media and cache',fn:"openSettingsPanel('storage')"},
+    {ic:'🎨',lb:'Theme',sb:'Change app appearance',fn:"openMod('themeMod')"},
+    {ic:'☁️',lb:'Chat Backup',sb:'Back up your messages',fn:"openSettingsPanel('backup')"},
+    {ic:'🌐',lb:'Language',sb:PREFS.language,fn:"openSettingsPanel('language')"},
+    {ic:'ℹ️',lb:'About SamChat',sb:'Version 1.0 MVP',fn:"openSettingsPanel('about')"}
+  ].map(function(s){
+    return'<div class="srow" onclick="'+s.fn+'" style="cursor:pointer;"><div style="width:36px;height:36px;border-radius:10px;background:var(--surHi);display:flex;align-items:center;justify-content:center;font-size:16px;">'+s.ic+'</div><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">'+s.lb+'</div><div style="color:var(--txt3);font-size:11px;">'+s.sb+'</div></div><span style="color:var(--txt3);font-size:16px;">›</span></div>';
+  }).join('');
+}
+
+function openSettingsPanel(type){
+  var titles={notif:'🔔 Notifications',privacy:'🔒 Privacy & Security',storage:'💾 Storage & Data',backup:'☁️ Chat Backup',language:'🌐 Language',about:'ℹ️ About SamChat'};
+  g('settModTitle').textContent=titles[type]||type;
+  var c='';
+  if(type==='notif'){
+    c='<p style="color:var(--txt2);font-size:13px;margin-bottom:14px;">Choose what you want to be notified about.</p>';
+    var nKeys=[['msgs','💬 Messages','Get notified of new messages'],['calls','📞 Calls','Incoming call alerts'],['likes','❤️ Likes','When someone likes your post'],['cmnts','💬 Comments','When someone comments'],['sound','🔔 Sound','Play notification sounds']];
+    nKeys.forEach(function(k){
+      c+='<div class="srow"><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">'+k[1]+'</div><div style="color:var(--txt3);font-size:11px;">'+k[2]+'</div></div><button class="tog '+(PREFS.notif[k[0]]?'on':'off')+'" id="nt_'+k[0]+'" onclick="togPref(\'notif\',\''+k[0]+'\',\'nt_'+k[0]+'\')"></button></div>';
+    });
+  } else if(type==='privacy'){
+    c='<p style="color:var(--txt2);font-size:13px;margin-bottom:14px;">Control who can see your information.</p>';
+    var pKeys=[['lastSeen','⏰ Last Seen','Show when you were last active'],['readReceipts','✓✓ Read Receipts','Let others know you read messages'],['online','🟢 Online Status','Show when you are active now']];
+    pKeys.forEach(function(k){
+      c+='<div class="srow"><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">'+k[1]+'</div><div style="color:var(--txt3);font-size:11px;">'+k[2]+'</div></div><button class="tog '+(PREFS.privacy[k[0]]?'on':'off')+'" id="pv_'+k[0]+'" onclick="togPref(\'privacy\',\''+k[0]+'\',\'pv_'+k[0]+'\')"></button></div>';
+    });
+    c+='<div class="srow"><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">👤 Profile Photo</div><div style="color:var(--txt3);font-size:11px;">Who can see your photo</div></div><select onchange="PREFS.privacy.profilePhoto=this.value;savePrefs();" style="background:var(--surHi);border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-size:12px;padding:4px 8px;"><option value="everyone" '+(PREFS.privacy.profilePhoto==='everyone'?'selected':'')+'>Everyone</option><option value="contacts" '+(PREFS.privacy.profilePhoto==='contacts'?'selected':'')+'>Contacts</option><option value="nobody" '+(PREFS.privacy.profilePhoto==='nobody'?'selected':'')+'>Nobody</option></select></div>';
+  } else if(type==='storage'){
+    var keys=Object.keys(localStorage).filter(function(k){return k.startsWith('sc5_');});
+    var totalBytes=0;try{keys.forEach(function(k){totalBytes+=(localStorage.getItem(k)||'').length*2;});}catch(e){}
+    c='<div style="background:var(--surHi);border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid var(--brd);"><div style="font-size:22px;font-weight:700;color:var(--txt);">'+fmtB(totalBytes)+'</div><div style="font-size:12px;color:var(--txt3);margin-top:2px;">Used by SamChat on this device</div><div style="margin-top:10px;height:5px;background:var(--brd);border-radius:3px;overflow:hidden;"><div style="height:100%;background:linear-gradient(90deg,#6C63FF,#8B85FF);width:'+Math.min(100,totalBytes/50000)+'%;"></div></div></div>';
+    c+='<div class="srow"><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">📥 Auto-Download</div><div style="color:var(--txt3);font-size:11px;">Automatically download photos and videos</div></div><button class="tog '+(PREFS.storage.autoDownload?'on':'off')+'" id="st_auto" onclick="togPref(\'storage\',\'autoDownload\',\'st_auto\')"></button></div>';
+    c+='<div style="margin-top:14px;"><button onclick="clearCache()" style="width:100%;padding:11px;background:none;border:1px solid rgba(239,68,68,.25);border-radius:11px;color:#EF4444;font-size:13px;font-weight:600;">🗑️ Clear Media Cache</button></div>';
+  } else if(type==='backup'){
+    c='<div style="background:var(--surHi);border-radius:12px;padding:14px;margin-bottom:14px;border:1px solid var(--brd);text-align:center;"><div style="font-size:30px;margin-bottom:6px;">☁️</div><div style="font-weight:600;color:var(--txt);font-size:14px;">Last backup</div><div style="color:var(--txt3);font-size:12px;margin-top:2px;">'+(PREFS.backup.lastBackup?timeAgo(PREFS.backup.lastBackup):'Never backed up')+'</div></div>';
+    c+='<div class="srow"><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">🔄 Auto Backup</div><div style="color:var(--txt3);font-size:11px;">Automatically back up your chats</div></div><button class="tog '+(PREFS.backup.auto?'on':'off')+'" id="bk_auto" onclick="togPref(\'backup\',\'auto\',\'bk_auto\')"></button></div>';
+    c+='<div class="srow"><div style="flex:1;"><div style="color:var(--txt);font-size:13px;font-weight:500;">📅 Frequency</div></div><select onchange="PREFS.backup.freq=this.value;savePrefs();" style="background:var(--surHi);border:1px solid var(--brd);border-radius:8px;color:var(--txt);font-size:12px;padding:4px 8px;"><option value="daily" '+(PREFS.backup.freq==='daily'?'selected':'')+'>Daily</option><option value="weekly" '+(PREFS.backup.freq==='weekly'?'selected':'')+'>Weekly</option><option value="monthly" '+(PREFS.backup.freq==='monthly'?'selected':'')+'>Monthly</option></select></div>';
+    c+='<div style="margin-top:14px;"><button onclick="doBackup()" class="pbtn">☁️ Back Up Now</button></div>';
+    c+='<div style="margin-top:8px;font-size:11px;color:var(--txt3);text-align:center;">Full cloud sync needs a backend server</div>';
+  } else if(type==='language'){
+    var langs=['English (US)','English (UK)','Français','Español','Deutsch','Português','Hausa','Yoruba','Igbo','Swahili','Arabic'];
+    c='<p style="color:var(--txt2);font-size:13px;margin-bottom:12px;">Select your preferred language.</p>';
+    c+=langs.map(function(l){return'<div class="srow" onclick="setLang(\''+l+'\')"><div style="flex:1;color:var(--txt);font-size:13px;">'+l+'</div>'+(PREFS.language===l?'<span style="color:var(--acc);font-size:18px;">✓</span>':'')+'</div>';}).join('');
+  } else if(type==='about'){
+    c='<div style="text-align:center;margin-bottom:16px;"><div style="width:60px;height:60px;border-radius:18px;background:linear-gradient(135deg,#6C63FF,#8B85FF);display:flex;align-items:center;justify-content:center;font-size:26px;margin:0 auto 10px;animation:glow 3s ease infinite;">💬</div><h2 style="font-size:19px;font-weight:700;color:var(--txt);font-family:\'Space Grotesk\',sans-serif;">SamChat</h2><p style="color:var(--txt3);font-size:12px;margin-top:2px;">Version 1.0.0 MVP</p></div>';
+    c+='<div style="background:var(--surHi);border-radius:12px;padding:13px;border:1px solid var(--brd);margin-bottom:10px;"><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="color:var(--txt2);font-size:12px;">Developer</span><span style="color:var(--txt);font-size:12px;font-weight:600;">Sam King</span></div><div style="display:flex;justify-content:space-between;margin-bottom:5px;"><span style="color:var(--txt2);font-size:12px;">Platform</span><span style="color:var(--txt);font-size:12px;font-weight:600;">Web (HTML5)</span></div><div style="display:flex;justify-content:space-between;"><span style="color:var(--txt2);font-size:12px;">Version</span><span style="color:var(--txt);font-size:12px;font-weight:600;">1.0.0 MVP</span></div></div>';
+    c+='<div style="background:rgba(108,99,255,.07);border:1px solid rgba(108,99,255,.2);border-radius:12px;padding:12px;"><div style="font-weight:600;color:var(--txt);font-size:13px;margin-bottom:5px;">✅ What\'s in this MVP</div><div style="font-size:12px;color:var(--txt2);line-height:1.7;">Real-time messaging · Voice notes · Media sharing · Voice calls (WebRTC) · Video calls (WebRTC) · Social feed with infinite scroll · Comments & likes · Share posts · User profiles · Follow system · Dark/Light/System themes · All settings panels · Persistent login session</div></div>';
+  }
+  g('settModContent').innerHTML=c;
+  openMod('settingsMod');
+}
+
+function togPref(cat,key,elId){
+  PREFS[cat][key]=!PREFS[cat][key];savePrefs();
+  var btn=g(elId);if(btn){btn.classList.toggle('on',PREFS[cat][key]);btn.classList.toggle('off',!PREFS[cat][key]);}
+}
+function clearCache(){
+  if(!confirm('Clear all cached media?'))return;
+  Object.keys(localStorage).filter(function(k){return k.startsWith('sc5_av_')||k.startsWith('sc5_pm_')||k.startsWith('sc5_msg_');}).forEach(function(k){try{localStorage.removeItem(k);}catch(e){}});
+  closeMod('settingsMod');showToast('Cache cleared ✓');
+}
+function doBackup(){
+  showToast('Backing up...');
+  setTimeout(function(){PREFS.backup.lastBackup=Date.now();savePrefs();showToast('Backup complete ✓');closeMod('settingsMod');renderSettings();},1500);
+}
+function setLang(l){PREFS.language=l;savePrefs();closeMod('settingsMod');renderSettings();showToast('Language set to '+l+' ✓');}
+
+// ── PREMIUM ──────────────────────────────────────────────
+function renderPremFeats(){
+  g('premFeats').innerHTML=['🤖 AI Smart Replies','☁️ Cloud Chat Backup','🎨 Custom Themes','👁️ Read Receipt Control','🕵️ Hide Online Status','📁 5GB File Uploads','⚡ Priority Delivery','🏅 Exclusive Badge','📢 Scheduled Broadcasts'].map(function(f){return'<div style="display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--brd);"><span style="font-size:16px;">'+f.split(' ')[0]+'</span><span style="color:var(--txt);font-size:13px;">'+f.split(' ').slice(1).join(' ')+'</span><span style="margin-left:auto;color:var(--grn);">✓</span></div>';}).join('');
+}
+function selPlan(plan){
+  g('planDetail').style.display='block';g('payBtn').style.display='flex';
+  g('pdName').textContent=plan==='monthly'?'Premium Monthly':'Premium Yearly';
+  g('pdAmt').textContent=plan==='monthly'?'$4.99':'$39.99';
+  g('pdBill').textContent=plan==='monthly'?'Monthly':'Yearly (save 33%)';
+  g('pMo').style.borderColor=plan==='monthly'?'#F59E0B':'var(--acc)';
+  g('pYr').style.border=plan==='yearly'?'2px solid #F59E0B':'2px solid transparent';
+}
+
+// ── MODAL / PANEL ────────────────────────────────────────
+function openMod(id){g(id).classList.add('on');}
+function closeMod(id){g(id).classList.remove('on');}
+function openPan(id){g(id).classList.add('on');}
+function closePan(id){g(id).classList.remove('on');}
+document.querySelectorAll('.overlay').forEach(function(ov){ov.addEventListener('click',function(e){if(e.target===ov)ov.classList.remove('on');});});
+
+// ── UTILS ────────────────────────────────────────────────
+function g(id){return document.getElementById(id);}
+function val(id){var e=g(id);return e?e.value:'';}
+function setErr(id,m){var e=g(id);if(e){e.textContent=m;e.style.display=m?'block':'none';}}
+function setMsg(id,m){var e=g(id);if(e){e.textContent=m;e.style.display=m?'block':'none';}}
+function xe(s){if(!s)return'';return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+function fmtT(ts){if(!ts)return'';var d=new Date(ts),now=new Date();if(d.toDateString()===now.toDateString())return d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});var diff=(now-d)/86400000;if(diff<2)return'Yesterday';if(diff<7)return['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];return d.toLocaleDateString([],{day:'numeric',month:'short'});}
+function timeAgo(ts){if(!ts)return'';var d=Date.now()-ts;if(d<60000)return'Just now';if(d<3600000)return Math.floor(d/60000)+'m ago';if(d<86400000)return Math.floor(d/3600000)+'h ago';if(d<604800000)return Math.floor(d/86400000)+'d ago';return new Date(ts).toLocaleDateString([],{day:'numeric',month:'short'});}
+var toastTmr=null;
+function showToast(msg){var t=g('toast');t.textContent=msg;t.style.display='block';clearTimeout(toastTmr);toastTmr=setTimeout(function(){t.style.display='none';},3000);}
+
+// ── BOOT ─────────────────────────────────────────────────
+loadDB();initSeed();
+try{applyTheme(localStorage.getItem(TH_KEY)||'dark');}catch(e){applyTheme('dark');}
+setAuthTab('signup');
+var savedUid=loadSession();
+if(savedUid){var savedUser=DB.users.find(function(u){return u.id===savedUid;});if(savedUser){var sav=localStorage.getItem('sc5_av_'+savedUser.id);if(sav)savedUser.av=sav;enterApp(savedUser);}}
+</script>
+</body>
+</html>
